@@ -16,6 +16,7 @@ pub struct Input {
 	mousedown_closure: Closure<dyn FnMut(MouseEvent)>,
 	mouseup_closure: Closure<dyn FnMut(MouseEvent)>,
 	mousemove_closure: Closure<dyn FnMut(MouseEvent)>,
+	mouseleave_closure: Closure<dyn FnMut(MouseEvent)>,
 }
 
 impl Input {
@@ -106,6 +107,17 @@ impl Input {
 				}
 			).map_err(js_val_err_to_string)?;
 		}
+		let mouseleave_closure;
+		{
+			let mouse_pos = mouse_pos.clone();
+			mouseleave_closure = add_event_listener(
+				window.as_ref(),
+				"mouseleave",
+				move |_: MouseEvent| {
+					*mouse_pos.borrow_mut() = None;
+				}
+			).map_err(js_val_err_to_string)?;
+		}
 		Ok(Input {
 			key_states,
 			mouse_pos,
@@ -117,6 +129,7 @@ impl Input {
 			mousedown_closure,
 			mouseup_closure,
 			mousemove_closure,
+			mouseleave_closure,
 		})
 	}
 
@@ -165,6 +178,10 @@ impl Iterator for &Input {
 impl Drop for Input {
 	fn drop(&mut self) {
 		if let Some(window) = web_sys::window() {
+			let _ = window.remove_event_listener_with_callback(
+				"mouseleave",
+				self.mouseleave_closure.as_ref().unchecked_ref()
+			);
 			let _ = window.remove_event_listener_with_callback(
 				"mousemove",
 				self.mousemove_closure.as_ref().unchecked_ref()

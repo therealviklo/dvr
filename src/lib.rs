@@ -67,7 +67,7 @@ impl TestState {
                 0.9,
                 '?'
             ),
-            inp: Input::new(None)?,
+            inp: Input::new(&dvr, None)?,
             s: String::new(),
         })
     }

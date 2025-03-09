@@ -411,6 +411,10 @@ impl Dvr {
 			.ok().ok_or("Canvas is not an HtmlCanvasElement")?)
 	}
 
+	pub fn canvas(&self) -> Result<HtmlCanvasElement, String> {
+		Self::get_canvas(&self.ctx)
+	}
+
 	// fn get_error(&self) -> Result<(), u32> {
 	// 	match self.ctx.get_error() {
 	// 		0 => Ok(()),

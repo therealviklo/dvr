@@ -1,8 +1,8 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
-use crate::wasm_utils::{add_event_listener, js_val_err_to_string};
+use crate::{wasm_utils::{add_event_listener, js_val_err_to_string}, Dvr};
 use queues::{CircularBuffer, IsQueue, Queue};
 use wasm_bindgen::{prelude::Closure, JsCast};
-use web_sys::{CompositionEvent, KeyboardEvent, MouseEvent};
+use web_sys::{CompositionEvent, HtmlCanvasElement, KeyboardEvent, MouseEvent};
 use super::{Event, KeyCodeEvent};
 
 pub struct Input {
@@ -10,6 +10,7 @@ pub struct Input {
 	mouse_pos: Rc<RefCell<Option<(i32, i32)>>>,
 	events: Rc<RefCell<Box<dyn IsQueue<Event>>>>,
 	max_events: Option<usize>,
+	canvas: HtmlCanvasElement,
 	keydown_closure: Closure<dyn FnMut(KeyboardEvent)>,
 	keyup_closure: Closure<dyn FnMut(KeyboardEvent)>,
 	compositionend_closure: Closure<dyn FnMut(CompositionEvent)>,
@@ -20,8 +21,9 @@ pub struct Input {
 }
 
 impl Input {
-	pub fn new(max_events: Option<usize>) -> Result<Input, String> {
+	pub fn new(dvr: &Dvr, max_events: Option<usize>) -> Result<Input, String> {
 		let window = web_sys::window().ok_or("Unable to get window")?;
+		let canvas = dvr.canvas()?;
 		let key_states = Rc::new(RefCell::new(HashMap::new()));
 		let mouse_pos = Rc::new(RefCell::new(None));
 		let events = Rc::new(RefCell::new(Self::new_key_events(max_events)));
@@ -78,7 +80,7 @@ impl Input {
 		{
 			let events = events.clone();
 			mousedown_closure = add_event_listener(
-				window.as_ref(),
+				canvas.as_ref(),
 				"mousedown",
 				move |e: MouseEvent| {
 					let _ = events.borrow_mut().add(Event::MouseDown(js_mouse_event_to_dvr(&e)));
@@ -89,7 +91,7 @@ impl Input {
 		{
 			let events = events.clone();
 			mouseup_closure = add_event_listener(
-				window.as_ref(),
+				canvas.as_ref(),
 				"mouseup",
 				move |e: MouseEvent| {
 					let _ = events.borrow_mut().add(Event::MouseUp(js_mouse_event_to_dvr(&e)));
@@ -100,10 +102,10 @@ impl Input {
 		{
 			let mouse_pos = mouse_pos.clone();
 			mousemove_closure = add_event_listener(
-				window.as_ref(),
+				canvas.as_ref(),
 				"mousemove",
 				move |e: MouseEvent| {
-					*mouse_pos.borrow_mut() = Some((e.x(), e.y()));
+					*mouse_pos.borrow_mut() = Some((e.offset_x(), e.offset_y()));
 				}
 			).map_err(js_val_err_to_string)?;
 		}
@@ -111,7 +113,7 @@ impl Input {
 		{
 			let mouse_pos = mouse_pos.clone();
 			mouseleave_closure = add_event_listener(
-				window.as_ref(),
+				canvas.as_ref(),
 				"mouseleave",
 				move |_: MouseEvent| {
 					*mouse_pos.borrow_mut() = None;
@@ -123,6 +125,7 @@ impl Input {
 			mouse_pos,
 			events,
 			max_events,
+			canvas,
 			keydown_closure,
 			keyup_closure,
 			compositionend_closure,
@@ -177,23 +180,23 @@ impl Iterator for &Input {
 
 impl Drop for Input {
 	fn drop(&mut self) {
+		let _ = self.canvas.remove_event_listener_with_callback(
+			"mouseleave",
+			self.mouseleave_closure.as_ref().unchecked_ref()
+		);
+		let _ = self.canvas.remove_event_listener_with_callback(
+			"mousemove",
+			self.mousemove_closure.as_ref().unchecked_ref()
+		);
+		let _ = self.canvas.remove_event_listener_with_callback(
+			"mouseup",
+			self.mouseup_closure.as_ref().unchecked_ref()
+		);
+		let _ = self.canvas.remove_event_listener_with_callback(
+			"mousedown",
+			self.mousedown_closure.as_ref().unchecked_ref()
+		);
 		if let Some(window) = web_sys::window() {
-			let _ = window.remove_event_listener_with_callback(
-				"mouseleave",
-				self.mouseleave_closure.as_ref().unchecked_ref()
-			);
-			let _ = window.remove_event_listener_with_callback(
-				"mousemove",
-				self.mousemove_closure.as_ref().unchecked_ref()
-			);
-			let _ = window.remove_event_listener_with_callback(
-				"mouseup",
-				self.mouseup_closure.as_ref().unchecked_ref()
-			);
-			let _ = window.remove_event_listener_with_callback(
-				"mousedown",
-				self.mousedown_closure.as_ref().unchecked_ref()
-			);
 			let _ = window.remove_event_listener_with_callback(
 				"compositionend",
 				self.compositionend_closure.as_ref().unchecked_ref()
@@ -249,8 +252,8 @@ fn js_key_event_to_dvr(e: &KeyboardEvent) -> KeyCodeEvent {
 
 fn js_mouse_event_to_dvr(e: &MouseEvent) -> super::MouseEvent {
 	super::MouseEvent {
-		x: e.x(),
-		y: e.y(),
+		x: e.offset_x(),
+		y: e.offset_y(),
 		button: mouse_button(e.button()),
 		ctrl_down: e.ctrl_key(),
 		shift_down: e.shift_key(),

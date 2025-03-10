@@ -17,6 +17,7 @@ pub struct Input {
 	mousedown_closure: Closure<dyn FnMut(MouseEvent)>,
 	mouseup_closure: Closure<dyn FnMut(MouseEvent)>,
 	mousemove_closure: Closure<dyn FnMut(MouseEvent)>,
+	mouseenter_closure: Closure<dyn FnMut(MouseEvent)>,
 	mouseleave_closure: Closure<dyn FnMut(MouseEvent)>,
 }
 
@@ -109,6 +110,17 @@ impl Input {
 				}
 			).map_err(js_val_err_to_string)?;
 		}
+		let mouseenter_closure;
+		{
+			let mouse_pos = mouse_pos.clone();
+			mouseenter_closure = add_event_listener(
+				canvas.as_ref(),
+				"mouseenter",
+				move |e: MouseEvent| {
+					*mouse_pos.borrow_mut() = Some((e.offset_x(), e.offset_y()));
+				}
+			).map_err(js_val_err_to_string)?;
+		}
 		let mouseleave_closure;
 		{
 			let mouse_pos = mouse_pos.clone();
@@ -132,6 +144,7 @@ impl Input {
 			mousedown_closure,
 			mouseup_closure,
 			mousemove_closure,
+			mouseenter_closure,
 			mouseleave_closure,
 		})
 	}
@@ -183,6 +196,10 @@ impl Drop for Input {
 		let _ = self.canvas.remove_event_listener_with_callback(
 			"mouseleave",
 			self.mouseleave_closure.as_ref().unchecked_ref()
+		);
+		let _ = self.canvas.remove_event_listener_with_callback(
+			"mouseenter",
+			self.mouseenter_closure.as_ref().unchecked_ref()
 		);
 		let _ = self.canvas.remove_event_listener_with_callback(
 			"mousemove",

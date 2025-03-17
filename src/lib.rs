@@ -1,6 +1,6 @@
 use core::f32;
 use font::FontSheet;
-// use js_sys::Math::random;
+use js_sys::Math::random;
 use input::{Event, Input};
 use wasm_bindgen::prelude::*;
 use web_sys::WebGl2RenderingContext;
@@ -16,7 +16,7 @@ pub mod state;
 pub mod font;
 pub mod input;
 
-use state::{LogicStatus, State, StateHandler};
+use state::{nswc, LogicStatus, State, StateHandler};
 
 struct TestState {
     a: f32,
@@ -85,11 +85,14 @@ impl State for TestState {
         if self.inp.key_down("S") {
             self.c -= 1.0;
         }
-        // if random() > 0.95 {
-        //     return Ok(LogicStatus::NewStateWithClosure(Box::new(|prev: Box<dyn State>| -> Box<dyn State> {
-        //         Box::new(TestState2::new(prev))
-        //     })))
-        // }
+        if random() > 0.99 {
+            // return Ok(LogicStatus::NewStateWithClosure(Box::new(|prev: Box<dyn State>| -> Box<dyn State> {
+            //     Box::new(TestState2::new(prev))
+            // })))
+            return Ok(nswc(|prev: Box<dyn State>| -> Box<dyn State> {
+                Box::new(TestState2::new(prev))
+            }))
+        }
         for e in &self.inp {
             match e {
                 Event::Char(chars) => {
@@ -211,29 +214,29 @@ impl State for TestState {
     }
 }
 
-// struct TestState2 {
-//     ts: Option<Box<dyn State>>
-// }
+struct TestState2 {
+    ts: Option<Box<dyn State>>
+}
 
-// impl TestState2 {
-//     pub fn new(ts: Box<dyn State>) -> TestState2 {
-//         TestState2 { ts: Some(ts) }
-//     }
-// }
+impl TestState2 {
+    pub fn new(ts: Box<dyn State>) -> TestState2 {
+        TestState2 { ts: Some(ts) }
+    }
+}
 
-// impl State for TestState2 {
-//     fn logic(&mut self) -> Result<LogicStatus, String> {
-//         if random() > 0.95 {
-//             return Ok(LogicStatus::NewState(self.ts.take().unwrap()))
-//         }
-//         Ok(LogicStatus::Continue)
-//     }
+impl State for TestState2 {
+    fn logic(&mut self) -> Result<LogicStatus, String> {
+        if random() > 0.95 {
+            return Ok(LogicStatus::NewState(self.ts.take().unwrap()))
+        }
+        Ok(LogicStatus::Continue)
+    }
 
-//     fn draw(&self, dvr: &Dvr) -> Result<(), String> {
-//         self.ts.as_ref().unwrap().draw(&dvr)?;
-//         Ok(())
-//     }
-// }
+    fn draw(&self, dvr: &Dvr) -> Result<(), String> {
+        self.ts.as_ref().unwrap().draw(&dvr)?;
+        Ok(())
+    }
+}
 
 #[wasm_bindgen]
 extern "C" {

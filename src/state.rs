@@ -16,3 +16,8 @@ pub enum LogicStatus {
 	NewStateWithClosure(Box<dyn FnOnce(Box<dyn State>) -> Box<dyn State>>),
 	Stop,
 }
+
+/// Returns a LogicStatus::NewStateWithClosure with the provided function
+pub fn nswc<T: FnOnce(Box<dyn State>) -> Box<dyn State> + 'static>(f: T) -> LogicStatus {
+	LogicStatus::NewStateWithClosure(Box::new(f))
+}

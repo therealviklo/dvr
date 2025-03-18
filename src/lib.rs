@@ -16,7 +16,7 @@ pub mod state;
 pub mod font;
 pub mod input;
 
-use state::{nswc, LogicStatus, State, StateHandler};
+use state::{LogicStatus, State, StateHandler};
 
 struct TestState {
     a: f32,
@@ -89,7 +89,7 @@ impl State for TestState {
             // return Ok(LogicStatus::NewStateWithClosure(Box::new(|prev: Box<dyn State>| -> Box<dyn State> {
             //     Box::new(TestState2::new(prev))
             // })))
-            return Ok(nswc(|prev: Box<dyn State>| -> Box<dyn State> {
+            return Ok(LogicStatus::nswc(|prev: Box<dyn State>| -> Box<dyn State> {
                 Box::new(TestState2::new(prev))
             }))
         }

@@ -143,7 +143,7 @@ impl State for TestState {
             None,
             f32::consts::PI
         )?;
-        self.font.draw_text(
+        let _ = self.font.draw_text(
             &dvr,
             "AbcgÅä¤öe",
             0.0,
@@ -152,8 +152,8 @@ impl State for TestState {
             100.0,
             font::Align::Centre,
             font::VAlign::Centre
-        )?;
-        self.font.draw_text(
+        );
+        let _ = self.font.draw_text(
             &dvr,
             "Abcg åä¤öe\ndreagy\n!&(/|si",
             dvr.get_screen_width() as f32 * -0.5,
@@ -162,8 +162,8 @@ impl State for TestState {
             100.0,
             font::Align::Left,
             font::VAlign::Top
-        )?;
-        self.font.draw_text(
+        );
+        let _ = self.font.draw_text(
             &dvr,
             "Abcgåä¤öe\ndÅreagn\n!&(/|si",
             dvr.get_screen_width() as f32 * 0.5,
@@ -172,24 +172,24 @@ impl State for TestState {
             100.0,
             font::Align::Right,
             font::VAlign::Bottom
-        )?;
-        dvr.draw(
+        );
+        let _ = dvr.draw(
             &self.tex,
             dvr.get_screen_width() as f32 * -0.5,
             dvr.get_screen_height() as f32 * 0.5,
             Some((100.0, 100.0)),
             Some(((25.0, 25.0), (50.0, 50.0))),
             0.0
-        )?;
-        dvr.draw(
+        );
+        let _ = dvr.draw(
             &self.tex,
             dvr.get_screen_width() as f32 * -0.5,
             0.0,
             Some((100.0, 100.0)),
             Some(((25.0, 25.0), (50.0, 50.0))),
             0.0
-        )?;
-        self.font.draw_text(
+        );
+        let _ = self.font.draw_text(
             &dvr,
             &self.s,
             0.0,
@@ -198,7 +198,7 @@ impl State for TestState {
             100.0,
             font::Align::Centre,
             font::VAlign::Centre
-        )?;
+        );
         if let Some((x, y)) = self.inp.get_mouse_pos() {
             let (x, y) = dvr.native_mouse_coords_to_dvr((x, y));
             dvr.draw(

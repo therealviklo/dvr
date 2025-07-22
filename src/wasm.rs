@@ -282,7 +282,8 @@ impl Dvr {
 
 				*size.borrow_mut() = Some((img.width(), img.height()));
 				*status.borrow_mut() = TextureStatus::Loaded;
-				*load_error_closures.borrow_mut() = None;
+				// Ta ut closurarna så att den droppas när funktionen tar slut
+				let _ = (*load_error_closures.borrow_mut()).take();
 
 				// Kör callback
 				if let Some(onload) = onload.take() {
@@ -300,7 +301,8 @@ impl Dvr {
 			error_closure = Closure::<dyn FnMut(_)>::new(move |_: Event|{
 				web_sys::console::error_1(&JsValue::from_str("Unable to load texture"));
 				*status.borrow_mut() = TextureStatus::Error;
-				*load_error_closures.borrow_mut() = None;
+				// Ta ut closurarna så att den droppas när funktionen tar slut
+				let _ = (*load_error_closures.borrow_mut()).take();
 
 				// Kör callback
 				if let Some(onerror) = onerror.take() {

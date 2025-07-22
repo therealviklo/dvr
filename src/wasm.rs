@@ -208,7 +208,7 @@ impl Dvr {
 		Ok(())
 	}
 
-	pub fn load_texture(&self, url: &str) -> Result<Texture, String> {
+	pub fn load_texture(&self, url: &str, mut onload: Option<Box<dyn FnOnce()>>, mut onerror: Option<Box<dyn FnOnce()>>) -> Result<Texture, String> {
 		let texture = self.ctx.create_texture()
 			.ok_or("Unable to create texture")?;
 		self.ctx.bind_texture(
@@ -284,6 +284,11 @@ impl Dvr {
 				*status.borrow_mut() = TextureStatus::Loaded;
 				*load_error_closures.borrow_mut() = None;
 
+				// Kör callback
+				if let Some(onload) = onload.take() {
+					onload();
+				}
+
 				Ok(())
 			}));
 			image.set_onload(Some(load_closure.as_ref().unchecked_ref()));
@@ -296,6 +301,11 @@ impl Dvr {
 				web_sys::console::error_1(&JsValue::from_str("Unable to load texture"));
 				*status.borrow_mut() = TextureStatus::Error;
 				*load_error_closures.borrow_mut() = None;
+
+				// Kör callback
+				if let Some(onerror) = onerror.take() {
+					onerror();
+				}
 			});
 			image.set_onerror(Some(error_closure.as_ref().unchecked_ref()));
 		}

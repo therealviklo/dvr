@@ -34,12 +34,12 @@ impl TestState {
             a: 0.0,
             b: 0.0,
             c: 0.0,
-            tex: dvr.load_texture("/pluto.png")?,
+            tex: dvr.load_texture("/pluto.png", None, None)?,
             font: font::Font::new(
                 vec![
                     FontSheet::new(
                         ('\0', '\u{00ff}'),
-                        dvr.load_texture("/font.png")?,
+                        dvr.load_texture("/font.png", None, None)?,
                         16,
                         16,
                         0.0,

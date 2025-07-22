@@ -34,7 +34,7 @@ impl TestState {
             a: 0.0,
             b: 0.0,
             c: 0.0,
-            tex: dvr.load_texture("/pluto.png", None, None)?,
+            tex: dvr.load_texture("/pluto.png", Some(Box::new(|| { web_sys::console::log_1(&JsValue::from_str("Kexy")); })), None)?,
             font: font::Font::new(
                 vec![
                     FontSheet::new(

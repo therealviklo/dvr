@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 use wasm_bindgen::prelude::*;
 use web_sys::{Event, HtmlCanvasElement, HtmlImageElement, WebGl2RenderingContext, WebGlBuffer, WebGlProgram, WebGlShader, WebGlTexture, WebGlUniformLocation};
 use crate::wasm_utils::log_errors;
@@ -490,5 +490,52 @@ impl Texture {
 impl Drop for Texture {
 	fn drop(&mut self) {
 		*self.load_error_closures.borrow_mut() = None;
+	}
+}
+
+struct TextureHandler {
+	textures: HashMap<String, Texture>,
+	completed: Rc<RefCell<usize>>,
+	onload: Rc<RefCell<Option<Box<dyn FnOnce()>>>>,
+}
+
+impl TextureHandler {
+	pub fn new(dvr: &Dvr, names: &[String], onload: Option<Box<dyn FnOnce()>>) -> Result<TextureHandler, String> {
+		let mut textures: HashMap<String, Texture> = HashMap::new();
+		let completed = Rc::new(RefCell::new(0));
+		let onload = Rc::new(RefCell::new(onload));
+		for name in names {
+			let name_count = names.len();
+			let completed_load = completed.clone();
+			let onload_load = onload.clone();
+			let completed_error = completed_load.clone();
+			let onload_error = onload.clone();
+			textures.insert(name.to_string(), dvr.load_texture(&name,
+				Some(Box::new(move || {
+					*completed_load.borrow_mut() += 1;
+					if *completed_load.borrow() == name_count {
+						if let Some(onload) = (*onload_load.borrow_mut()).take() {
+							onload();
+						}
+					}
+				})),
+				Some(Box::new(move || {
+					*completed_error.borrow_mut() += 1;
+					if *completed_error.borrow() == name_count {
+						if let Some(onload) = (*onload_error.borrow_mut()).take() {
+							onload();
+						}
+					}
+				})))?);
+		}
+		Ok(TextureHandler {
+			textures,
+			completed,
+			onload
+		})
+	}
+
+	pub fn get(&self, name: String) -> Option<&Texture> {
+		self.textures.get(&name)
 	}
 }

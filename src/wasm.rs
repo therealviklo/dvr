@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, future::{poll_fn, Future}, rc::Rc, task::Poll};
 use wasm_bindgen::prelude::*;
 use web_sys::{Event, HtmlCanvasElement, HtmlImageElement, WebGl2RenderingContext, WebGlBuffer, WebGlProgram, WebGlShader, WebGlTexture, WebGlUniformLocation};
 use crate::wasm_utils::log_errors;
@@ -496,43 +496,37 @@ impl Drop for Texture {
 struct TextureHandler {
 	textures: HashMap<String, Texture>,
 	completed: Rc<RefCell<usize>>,
-	onload: Rc<RefCell<Option<Box<dyn FnOnce()>>>>,
 }
 
 impl TextureHandler {
-	pub fn new(dvr: &Dvr, names: &[String], onload: Option<Box<dyn FnOnce()>>) -> Result<TextureHandler, String> {
+	pub fn new(dvr: &Dvr, names: &[String]) -> Result<Box<dyn Future<Output = Rc<TextureHandler>>>, String> {
 		let mut textures: HashMap<String, Texture> = HashMap::new();
 		let completed = Rc::new(RefCell::new(0));
-		let onload = Rc::new(RefCell::new(onload));
 		for name in names {
-			let name_count = names.len();
 			let completed_load = completed.clone();
-			let onload_load = onload.clone();
 			let completed_error = completed_load.clone();
-			let onload_error = onload.clone();
 			textures.insert(name.to_string(), dvr.load_texture(&name,
 				Some(Box::new(move || {
 					*completed_load.borrow_mut() += 1;
-					if *completed_load.borrow() == name_count {
-						if let Some(onload) = (*onload_load.borrow_mut()).take() {
-							onload();
-						}
-					}
 				})),
 				Some(Box::new(move || {
 					*completed_error.borrow_mut() += 1;
-					if *completed_error.borrow() == name_count {
-						if let Some(onload) = (*onload_error.borrow_mut()).take() {
-							onload();
-						}
-					}
-				})))?);
+				})))?
+			);
 		}
-		Ok(TextureHandler {
+		let texture_handler = Rc::new(TextureHandler {
 			textures,
 			completed,
-			onload
-		})
+		});
+		let name_count = names.len();
+		Ok(Box::new(poll_fn(move |_cx| -> Poll<Rc<TextureHandler>> {
+			// TODO: panic om borrow_mut är aktiv
+			if *texture_handler.completed.borrow() == name_count {
+				Poll::Ready(texture_handler.clone())
+			} else {
+				Poll::Pending
+			}
+		})))
 	}
 
 	pub fn get(&self, name: String) -> Option<&Texture> {

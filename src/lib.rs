@@ -259,7 +259,10 @@ fn start() -> Result<(), JsValue> {
         .dyn_into::<WebGl2RenderingContext>()?;
 
     let dvr = Dvr::new(context)?;
-    // let texture_handler = TextureHandler::new(&dvr, &["/pluto.png".to_string(), "/font.png".to_string()])?;
+    let texture_handler = TextureHandler::new(
+        &dvr,
+        &["/pluto.png", "/font.png"].map(str::to_string)
+    )?;
     let test_state = TestState::new(&dvr)?;
     StateHandler::run(dvr, Box::new(test_state))?;
 

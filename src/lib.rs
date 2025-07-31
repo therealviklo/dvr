@@ -1,14 +1,17 @@
 use core::f32;
+use std::future::{self, Future, IntoFuture};
 use font::FontSheet;
 use js_sys::Math::random;
 use input::{Event, Input};
 use wasm_bindgen::prelude::*;
+use wasm_bindgen_futures::spawn_local;
 use web_sys::WebGl2RenderingContext;
 
 #[cfg(target_arch = "wasm32")]
 mod wasm;
 #[cfg(target_arch = "wasm32")]
 pub use crate::wasm::*;
+use crate::wasm_utils::log_errors;
 #[cfg(target_arch = "wasm32")]
 mod wasm_utils;
 
@@ -244,7 +247,7 @@ extern "C" {
 }
 
 #[wasm_bindgen(start)]
-fn start() -> Result<(), JsValue> {
+async fn start() -> Result<(), JsValue> {
     let window = web_sys::window().ok_or("Unable to get window")?;
     let document = window.document().ok_or("Unable to get document")?;
 
@@ -262,7 +265,7 @@ fn start() -> Result<(), JsValue> {
     let texture_handler = TextureHandler::new(
         &dvr,
         &["/pluto.png", "/font.png"].map(str::to_string)
-    )?;
+    )?.await;
     let test_state = TestState::new(&dvr)?;
     StateHandler::run(dvr, Box::new(test_state))?;
 

@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap, future::{poll_fn, Future}, rc::Rc, task::Poll};
+use std::{cell::RefCell, collections::HashMap, future::{poll_fn, Future}, rc::Rc, task::{Poll, Waker}};
 use wasm_bindgen::prelude::*;
 use web_sys::{Event, HtmlCanvasElement, HtmlImageElement, WebGl2RenderingContext, WebGlBuffer, WebGlProgram, WebGlShader, WebGlTexture, WebGlUniformLocation};
 use crate::wasm_utils::log_errors;
@@ -500,17 +500,33 @@ pub struct TextureHandler {
 
 impl TextureHandler {
 	pub fn new(dvr: &Dvr, names: &[String]) -> Result<impl Future<Output = Rc<TextureHandler>>, String> {
+		let waker: Rc<RefCell<Option<Waker>>> = Rc::new(RefCell::new(None));
 		let mut textures: HashMap<String, Texture> = HashMap::new();
 		let completed = Rc::new(RefCell::new(0));
+		let name_count = names.len();
 		for name in names {
 			let completed_load = completed.clone();
 			let completed_error = completed_load.clone();
+			let waker_load = waker.clone();
+			let waker_error = waker.clone();
 			textures.insert(name.to_string(), dvr.load_texture(&name,
 				Some(Box::new(move || {
 					*completed_load.borrow_mut() += 1;
+					if *completed_load.borrow() == name_count {
+						if let Some(waker) = waker_load.borrow_mut().take() {
+							waker.wake();
+						}
+						// TODO: else panic?
+					}
 				})),
 				Some(Box::new(move || {
 					*completed_error.borrow_mut() += 1;
+					if *completed_error.borrow() == name_count {
+						if let Some(waker) = waker_error.borrow_mut().take() {
+							waker.wake();
+						}
+						// TODO: else panic?
+					}
 				})))?
 			);
 		}
@@ -518,12 +534,15 @@ impl TextureHandler {
 			textures,
 			completed,
 		});
-		let name_count = names.len();
-		Ok(poll_fn(move |_cx| -> Poll<Rc<TextureHandler>> {
+		Ok(poll_fn(move |cx| -> Poll<Rc<TextureHandler>> {
 			// TODO: panic om borrow_mut är aktiv
 			if *texture_handler.completed.borrow() == name_count {
 				Poll::Ready(texture_handler.clone())
 			} else {
+				if waker.borrow().is_none() {
+					// TODO: clone_from?
+					*waker.borrow_mut() = Some(cx.waker().clone());
+				}
 				Poll::Pending
 			}
 		}))

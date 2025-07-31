@@ -1,17 +1,14 @@
 use core::f32;
-use std::future::{self, Future, IntoFuture};
 use font::FontSheet;
 use js_sys::Math::random;
 use input::{Event, Input};
 use wasm_bindgen::prelude::*;
-use wasm_bindgen_futures::spawn_local;
 use web_sys::WebGl2RenderingContext;
 
 #[cfg(target_arch = "wasm32")]
 mod wasm;
 #[cfg(target_arch = "wasm32")]
 pub use crate::wasm::*;
-use crate::wasm_utils::log_errors;
 #[cfg(target_arch = "wasm32")]
 mod wasm_utils;
 

@@ -19,7 +19,6 @@ pub struct Dvr {
 	sampler_location: WebGlUniformLocation,
 	position_buffer: WebGlBuffer,
 	texture_buffer: WebGlBuffer,
-	// resize_event_closure: Closure<dyn FnMut(Event)>,
 }
 
 impl Dvr {
@@ -73,20 +72,6 @@ impl Dvr {
 		let texture_buffer = Self::create_texture_buffer(&ctx)?;
 
 		Self::resize_canvas_if_needed(&ctx)?;
-		// let window = web_sys::window()
-		// 	.ok_or("Unable to get window")?;
-		// let resize_event_closure;
-		// {
-		// 	let ctx = ctx.clone();
-		// 	resize_event_closure = add_event_listener(
-		// 		&window,
-		// 		"resize",
-		// 		log_errors_arg(move |_: Event| -> Result<(), JsValue> {
-		// 			// Self::resize_canvas_if_needed(&ctx)?;
-		// 			Ok(())
-		// 		}
-		// 	)).ok().ok_or("Unable to add resize event listener")?;
-		// }
 
 		ctx.pixel_storei(WebGl2RenderingContext::UNPACK_FLIP_Y_WEBGL, 1);
 		ctx.enable(WebGl2RenderingContext::BLEND);
@@ -103,7 +88,6 @@ impl Dvr {
 			sampler_location,
 			position_buffer,
 			texture_buffer,
-			// resize_event_closure
 		})
 	}
 
@@ -455,17 +439,6 @@ impl Dvr {
 	// 	}
 	// }
 }
-
-// impl Drop for Dvr {
-// 	fn drop(&mut self) {
-// 		if let Some(window) = web_sys::window() {
-// 			let _ = window.remove_event_listener_with_callback(
-// 				"resize",
-// 				self.resize_event_closure.as_ref().unchecked_ref()
-// 			);
-// 		}
-// 	}
-// }
 
 pub struct Texture {
 	texture: WebGlTexture,

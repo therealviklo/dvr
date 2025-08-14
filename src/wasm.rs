@@ -127,7 +127,6 @@ impl Dvr {
 		self.get_screen_height() as f32 * 0.5 - y as f32
 	}
 
-	// TODO: snyggare lösning?
 	pub fn native_mouse_coords_to_dvr(&self, (x, y): (i32, i32)) -> (f32, f32) {
 		(self.native_mouse_x_to_dvr(x), self.native_mouse_y_to_dvr(y))
 	}
@@ -291,7 +290,6 @@ impl Dvr {
 				if let Some(waker) = waker.borrow_mut().take() {
 					waker.wake();
 				}
-				// TODO: else panic?
 				drop((*load_error_closures.borrow_mut()).take());
 
 				Ok(())
@@ -309,7 +307,6 @@ impl Dvr {
 				if let Some(waker) = waker.borrow_mut().take() {
 					waker.wake();
 				}
-				// TODO: else panic?
 				drop((*load_error_closures.borrow_mut()).take());
 			});
 			image.set_onerror(Some(error_closure.as_ref().unchecked_ref()));
@@ -321,7 +318,6 @@ impl Dvr {
 			match *status.borrow_mut() {
 				TextureLoadStatus::Loading => {
 					if waker.borrow().is_none() {
-						// TODO: clone_from?
 						*waker.borrow_mut() = Some(cx.waker().clone());
 					}
 					Poll::Pending
@@ -330,7 +326,6 @@ impl Dvr {
 					texture: texture.clone(), // Can't move for some reason
 					size: (image.width(), image.height()),
 				})),
-				// TODO: bättre felmeddelanden?
 				TextureLoadStatus::Error => Poll::Ready(Err("Error when loading texture".to_string())),
 			}
 		}))

@@ -499,9 +499,9 @@ pub struct TextureHandler {
 
 impl TextureHandler {
 	pub async fn new(dvr: &Dvr, names: &[String]) -> Result<TextureHandler, String> {
-		let mut texture_futures: HashMap<String, Box<dyn Future<Output = Result<Texture, String>> + Unpin>> = HashMap::new();
+		let mut texture_futures: Vec<(String, Box<dyn Future<Output = Result<Texture, String>> + Unpin>)> = Vec::new();
 		for name in names {
-			texture_futures.insert(name.to_string(), Box::new(dvr.load_texture_impl(&name)?));
+			texture_futures.push((name.to_string(), Box::new(dvr.load_texture_impl(&name)?)));
 		}
 		let mut textures: HashMap<String, Texture> = HashMap::new();
 		for (name, future) in texture_futures {

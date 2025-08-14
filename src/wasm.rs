@@ -292,8 +292,7 @@ impl Dvr {
 					waker.wake();
 				}
 				// TODO: else panic?
-				// Ta ut closurarna så att den droppas när funktionen tar slut
-				let _ = (*load_error_closures.borrow_mut()).take();
+				drop((*load_error_closures.borrow_mut()).take());
 
 				Ok(())
 			}));
@@ -311,8 +310,7 @@ impl Dvr {
 					waker.wake();
 				}
 				// TODO: else panic?
-				// Ta ut closurarna så att den droppas när funktionen tar slut
-				let _ = (*load_error_closures.borrow_mut()).take();
+				drop((*load_error_closures.borrow_mut()).take());
 			});
 			image.set_onerror(Some(error_closure.as_ref().unchecked_ref()));
 		}
@@ -329,7 +327,7 @@ impl Dvr {
 					Poll::Pending
 				},
 				TextureLoadStatus::Loaded => Poll::Ready(Ok(Texture {
-					texture: texture.clone(), // Kan inte movea av någon anledning
+					texture: texture.clone(), // Can't move for some reason
 					size: (image.width(), image.height()),
 				})),
 				// TODO: bättre felmeddelanden?

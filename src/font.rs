@@ -178,13 +178,12 @@ impl FontSheet {
 	}
 
 	fn get_char_cell_size(&self) -> Result<(f32, f32), String> {
-		let (w, h) = self.texture.get_size().ok().ok_or("Texture not ready yet")?;
+		let (w, h) = self.texture.get_size();
 		Ok(((w as usize / self.chars_per_row) as f32, (h as usize / self.rows) as f32))
 	}
 
 	fn get_char_width(&self, c: char, h: f32) -> Result<f32, String> {
-		let (sheet_width, sheet_height) = self.texture.get_size()
-			.ok().ok_or("Texture not ready yet")?;
+		let (sheet_width, sheet_height) = self.texture.get_size();
 		if c < self.range.0 || c > self.range.1 {
 			return Err("Character not in sheet".to_string());
 		}

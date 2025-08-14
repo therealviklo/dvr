@@ -184,9 +184,9 @@ impl Dvr {
 		);
 
 		let (pos, size) = match tex_pos_size {
-			Some(((x, y), (w, h))) => match texture.get_size() {
-				Ok((tw, th)) => ([x / tw as f32, 1.0 - (h + y) / th as f32], [w / tw as f32, h / th as f32]),
-				_ => ([0.0, 0.0], [1.0, 1.0])
+			Some(((x, y), (w, h))) => {
+				let (tw, th) = texture.get_size();
+				([x / tw as f32, 1.0 - (h + y) / th as f32], [w / tw as f32, h / th as f32])
 			},
 			None => ([0.0, 0.0], [1.0, 1.0]),
 		};
@@ -208,9 +208,18 @@ impl Dvr {
 		Ok(())
 	}
 
-	pub fn load_texture(&self, url: &str, mut onload: Option<Box<dyn FnOnce()>>, mut onerror: Option<Box<dyn FnOnce()>>) -> Result<Texture, String> {
+	pub fn load_texture(&self, url: &str) -> Result<impl Future<Output = Result<Texture, String>>, String> {
+		enum TextureLoadStatus {
+			Loading,
+			Loaded,
+			Error,
+		}
+
 		let texture = self.ctx.create_texture()
 			.ok_or("Unable to create texture")?;
+		let status: Rc<RefCell<TextureLoadStatus>> = Rc::new(RefCell::new(TextureLoadStatus::Loading));
+		let waker: Rc<RefCell<Option<Waker>>> = Rc::new(RefCell::new(None));
+
 		self.ctx.bind_texture(
 			WebGl2RenderingContext::TEXTURE_2D,
 			Some(&texture)
@@ -231,8 +240,6 @@ impl Dvr {
 
 		let load_error_closures: Rc<RefCell<Option<(Closure<dyn FnMut()>, Closure<dyn FnMut(Event)>)>>>
 			= Rc::new(RefCell::new(None));
-		let size: Rc<RefCell<Option<(u32, u32)>>> = Rc::new(RefCell::new(None));
-		let status: Rc<RefCell<TextureStatus>> = Rc::new(RefCell::new(TextureStatus::Loading));
 		let image = HtmlImageElement::new()
 			.ok().ok_or("Failed to create image element")?;
 		let load_closure;
@@ -241,10 +248,10 @@ impl Dvr {
 			let texture = texture.clone();
 			let img = image.clone();
 			let load_error_closures = load_error_closures.clone();
-			let size = size.clone();
 			let status = status.clone();
+			let waker = waker.clone();
 			load_closure = Closure::<dyn FnMut()>::new(log_errors(move || -> Result<(), JsValue> {
-				*status.borrow_mut() = TextureStatus::Error;
+				*status.borrow_mut() = TextureLoadStatus::Error;
 
 				ctx.bind_texture(
 					WebGl2RenderingContext::TEXTURE_2D,
@@ -280,15 +287,13 @@ impl Dvr {
 					);
 				}
 
-				*size.borrow_mut() = Some((img.width(), img.height()));
-				*status.borrow_mut() = TextureStatus::Loaded;
+				*status.borrow_mut() = TextureLoadStatus::Loaded;
+				if let Some(waker) = waker.borrow_mut().take() {
+					waker.wake();
+				}
+				// TODO: else panic?
 				// Ta ut closurarna så att den droppas när funktionen tar slut
 				let _ = (*load_error_closures.borrow_mut()).take();
-
-				// Kör callback
-				if let Some(onload) = onload.take() {
-					onload();
-				}
 
 				Ok(())
 			}));
@@ -298,23 +303,39 @@ impl Dvr {
 		{
 			let load_error_closures = load_error_closures.clone();
 			let status = status.clone();
+			let waker = waker.clone();
 			error_closure = Closure::<dyn FnMut(_)>::new(move |_: Event|{
 				web_sys::console::error_1(&JsValue::from_str("Unable to load texture"));
-				*status.borrow_mut() = TextureStatus::Error;
+				*status.borrow_mut() = TextureLoadStatus::Error;
+				if let Some(waker) = waker.borrow_mut().take() {
+					waker.wake();
+				}
+				// TODO: else panic?
 				// Ta ut closurarna så att den droppas när funktionen tar slut
 				let _ = (*load_error_closures.borrow_mut()).take();
-
-				// Kör callback
-				if let Some(onerror) = onerror.take() {
-					onerror();
-				}
 			});
 			image.set_onerror(Some(error_closure.as_ref().unchecked_ref()));
 		}
 		*load_error_closures.borrow_mut() = Some((load_closure, error_closure));
 		image.set_src(url);
 
-		Ok(Texture { texture, load_error_closures, size, status })
+		Ok(poll_fn(move |cx| -> Poll<Result<Texture, String>> {
+			match *status.borrow_mut() {
+				TextureLoadStatus::Loading => {
+					if waker.borrow().is_none() {
+						// TODO: clone_from?
+						*waker.borrow_mut() = Some(cx.waker().clone());
+					}
+					Poll::Pending
+				},
+				TextureLoadStatus::Loaded => Poll::Ready(Ok(Texture {
+					texture: texture.clone(), // Kan inte movea av någon anledning
+					size: (image.width(), image.height()),
+				})),
+				// TODO: bättre felmeddelanden?
+				TextureLoadStatus::Error => Poll::Ready(Err("Error when loading texture".to_string())),
+			}
+		}))
 	}
 
 	fn resize_canvas_if_needed(ctx: &WebGl2RenderingContext) -> Result<(), String> {
@@ -446,106 +467,84 @@ impl Dvr {
 // 	}
 // }
 
-#[derive(Clone, Copy)]
-pub enum TextureStatus {
-	Loading,
-	Loaded,
-	Error,
-}
-
 pub struct Texture {
 	texture: WebGlTexture,
-	load_error_closures: Rc<RefCell<Option<(Closure<dyn FnMut()>, Closure<dyn FnMut(Event)>)>>>,
-	size: Rc<RefCell<Option<(u32, u32)>>>,
-	status: Rc<RefCell<TextureStatus>>,
+	size: (u32, u32),
 }
 
 impl Texture {
-	pub fn get_status(&self) -> TextureStatus {
-		*self.status.borrow()
+	pub fn get_size(&self) -> (u32, u32) {
+		self.size
 	}
 
-	pub fn get_size(&self) -> Result<(u32, u32), TextureStatus> {
-		match *self.size.borrow() {
-			Some(size) => Ok(size),
-			None => Err(*self.status.borrow())
-		}
+	pub fn get_width(&self) -> u32 {
+		self.size.0
 	}
 
-	pub fn get_width(&self) -> Result<u32, TextureStatus> {
-		match *self.size.borrow() {
-			Some((w, _)) => Ok(w),
-			None => Err(*self.status.borrow())
-		}
-	}
-
-	pub fn get_height(&self) -> Result<u32, TextureStatus> {
-		match *self.size.borrow() {
-			Some((_, h)) => Ok(h),
-			None => Err(*self.status.borrow())
-		}
-	}
-}
-
-impl Drop for Texture {
-	fn drop(&mut self) {
-		*self.load_error_closures.borrow_mut() = None;
+	pub fn get_height(&self) -> u32 {
+		self.size.1
 	}
 }
 
 pub struct TextureHandler {
 	textures: HashMap<String, Texture>,
-	completed: Rc<RefCell<usize>>,
 }
 
 impl TextureHandler {
-	pub fn new(dvr: &Dvr, names: &[String]) -> Result<impl Future<Output = Rc<TextureHandler>>, String> {
-		let waker: Rc<RefCell<Option<Waker>>> = Rc::new(RefCell::new(None));
-		let mut textures: HashMap<String, Texture> = HashMap::new();
-		let completed = Rc::new(RefCell::new(0));
-		let name_count = names.len();
+	pub async fn new(dvr: &Dvr, names: &[String]) -> Result<TextureHandler, String> {
+		let mut texture_futures: HashMap<String, Box<dyn Future<Output = Result<Texture, String>> + Unpin>> = HashMap::new();
 		for name in names {
-			let completed_load = completed.clone();
-			let completed_error = completed_load.clone();
-			let waker_load = waker.clone();
-			let waker_error = waker.clone();
-			textures.insert(name.to_string(), dvr.load_texture(&name,
-				Some(Box::new(move || {
-					*completed_load.borrow_mut() += 1;
-					if *completed_load.borrow() == name_count {
-						if let Some(waker) = waker_load.borrow_mut().take() {
-							waker.wake();
-						}
-						// TODO: else panic?
-					}
-				})),
-				Some(Box::new(move || {
-					*completed_error.borrow_mut() += 1;
-					if *completed_error.borrow() == name_count {
-						if let Some(waker) = waker_error.borrow_mut().take() {
-							waker.wake();
-						}
-						// TODO: else panic?
-					}
-				})))?
-			);
+			texture_futures.insert(name.to_string(), Box::new(dvr.load_texture(&name)?));
 		}
-		let texture_handler = Rc::new(TextureHandler {
-			textures,
-			completed,
-		});
-		Ok(poll_fn(move |cx| -> Poll<Rc<TextureHandler>> {
-			// TODO: panic om borrow_mut är aktiv
-			if *texture_handler.completed.borrow() == name_count {
-				Poll::Ready(texture_handler.clone())
-			} else {
-				if waker.borrow().is_none() {
-					// TODO: clone_from?
-					*waker.borrow_mut() = Some(cx.waker().clone());
-				}
-				Poll::Pending
-			}
-		}))
+		let mut textures: HashMap<String, Texture> = HashMap::new();
+		for (name, future) in texture_futures {
+			textures.insert(name, future.await?);
+		}
+		Ok(TextureHandler { textures })
+		// let completed = Rc::new(RefCell::new(0));
+		// let name_count = names.len();
+		// for name in names {
+		// 	let completed_load = completed.clone();
+		// 	let completed_error = completed_load.clone();
+		// 	let waker_load = waker.clone();
+		// 	let waker_error = waker.clone();
+		// 	textures.insert(name.to_string(), dvr.load_texture(&name,
+		// 		Some(Box::new(move || {
+		// 			*completed_load.borrow_mut() += 1;
+		// 			if *completed_load.borrow() == name_count {
+		// 				if let Some(waker) = waker_load.borrow_mut().take() {
+		// 					waker.wake();
+		// 				}
+		// 				// TODO: else panic?
+		// 			}
+		// 		})),
+		// 		Some(Box::new(move || {
+		// 			*completed_error.borrow_mut() += 1;
+		// 			if *completed_error.borrow() == name_count {
+		// 				if let Some(waker) = waker_error.borrow_mut().take() {
+		// 					waker.wake();
+		// 				}
+		// 				// TODO: else panic?
+		// 			}
+		// 		})))?
+		// 	);
+		// }
+		// let texture_handler = Rc::new(TextureHandler {
+		// 	textures,
+		// 	completed,
+		// });
+		// Ok(poll_fn(move |cx| -> Poll<Rc<TextureHandler>> {
+		// 	// TODO: panic om borrow_mut är aktiv
+		// 	if *texture_handler.completed.borrow() == name_count {
+		// 		Poll::Ready(texture_handler.clone())
+		// 	} else {
+		// 		if waker.borrow().is_none() {
+		// 			// TODO: clone_from?
+		// 			*waker.borrow_mut() = Some(cx.waker().clone());
+		// 		}
+		// 		Poll::Pending
+		// 	}
+		// }))
 	}
 
 	pub fn get(&self, name: String) -> Option<&Texture> {

@@ -208,7 +208,7 @@ impl Dvr {
 		Ok(())
 	}
 
-	fn load_texture_impl(&self, url: &str) -> Result<impl Future<Output = Result<Texture, String>>, String> {
+	fn load_texture_internal(&self, url: &str) -> Result<impl Future<Output = Result<Texture, String>>, String> {
 		enum TextureLoadStatus {
 			Loading,
 			Loaded,
@@ -339,7 +339,7 @@ impl Dvr {
 	}
 	
 	pub async fn load_texture(&self, url: &str) -> Result<Texture, String> {
-		match self.load_texture_impl(url) {
+		match self.load_texture_internal(url) {
 			Ok(future) => future.await,
 			Err(e) => Err(e),
 		}
@@ -501,7 +501,7 @@ impl TextureHandler {
 	pub async fn new(dvr: &Dvr, names: &[String]) -> Result<TextureHandler, String> {
 		let mut texture_futures: Vec<(String, Box<dyn Future<Output = Result<Texture, String>> + Unpin>)> = Vec::new();
 		for name in names {
-			texture_futures.push((name.to_string(), Box::new(dvr.load_texture_impl(&name)?)));
+			texture_futures.push((name.to_string(), Box::new(dvr.load_texture_internal(&name)?)));
 		}
 		let mut textures: HashMap<String, Texture> = HashMap::new();
 		for (name, future) in texture_futures {

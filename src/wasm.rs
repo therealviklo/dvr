@@ -508,50 +508,6 @@ impl TextureHandler {
 			textures.insert(name, future.await?);
 		}
 		Ok(TextureHandler { textures })
-		// let completed = Rc::new(RefCell::new(0));
-		// let name_count = names.len();
-		// for name in names {
-		// 	let completed_load = completed.clone();
-		// 	let completed_error = completed_load.clone();
-		// 	let waker_load = waker.clone();
-		// 	let waker_error = waker.clone();
-		// 	textures.insert(name.to_string(), dvr.load_texture(&name,
-		// 		Some(Box::new(move || {
-		// 			*completed_load.borrow_mut() += 1;
-		// 			if *completed_load.borrow() == name_count {
-		// 				if let Some(waker) = waker_load.borrow_mut().take() {
-		// 					waker.wake();
-		// 				}
-		// 				// TODO: else panic?
-		// 			}
-		// 		})),
-		// 		Some(Box::new(move || {
-		// 			*completed_error.borrow_mut() += 1;
-		// 			if *completed_error.borrow() == name_count {
-		// 				if let Some(waker) = waker_error.borrow_mut().take() {
-		// 					waker.wake();
-		// 				}
-		// 				// TODO: else panic?
-		// 			}
-		// 		})))?
-		// 	);
-		// }
-		// let texture_handler = Rc::new(TextureHandler {
-		// 	textures,
-		// 	completed,
-		// });
-		// Ok(poll_fn(move |cx| -> Poll<Rc<TextureHandler>> {
-		// 	// TODO: panic om borrow_mut är aktiv
-		// 	if *texture_handler.completed.borrow() == name_count {
-		// 		Poll::Ready(texture_handler.clone())
-		// 	} else {
-		// 		if waker.borrow().is_none() {
-		// 			// TODO: clone_from?
-		// 			*waker.borrow_mut() = Some(cx.waker().clone());
-		// 		}
-		// 		Poll::Pending
-		// 	}
-		// }))
 	}
 
 	pub fn get(&self, name: String) -> Option<&Texture> {

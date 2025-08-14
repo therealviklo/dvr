@@ -208,7 +208,7 @@ impl Dvr {
 		Ok(())
 	}
 
-	pub fn load_texture(&self, url: &str) -> Result<impl Future<Output = Result<Texture, String>>, String> {
+	fn load_texture_impl(&self, url: &str) -> Result<impl Future<Output = Result<Texture, String>>, String> {
 		enum TextureLoadStatus {
 			Loading,
 			Loaded,
@@ -336,6 +336,13 @@ impl Dvr {
 				TextureLoadStatus::Error => Poll::Ready(Err("Error when loading texture".to_string())),
 			}
 		}))
+	}
+	
+	pub async fn load_texture(&self, url: &str) -> Result<Texture, String> {
+		match self.load_texture_impl(url) {
+			Ok(future) => future.await,
+			Err(e) => Err(e),
+		}
 	}
 
 	fn resize_canvas_if_needed(ctx: &WebGl2RenderingContext) -> Result<(), String> {
@@ -494,7 +501,7 @@ impl TextureHandler {
 	pub async fn new(dvr: &Dvr, names: &[String]) -> Result<TextureHandler, String> {
 		let mut texture_futures: HashMap<String, Box<dyn Future<Output = Result<Texture, String>> + Unpin>> = HashMap::new();
 		for name in names {
-			texture_futures.insert(name.to_string(), Box::new(dvr.load_texture(&name)?));
+			texture_futures.insert(name.to_string(), Box::new(dvr.load_texture_impl(&name)?));
 		}
 		let mut textures: HashMap<String, Texture> = HashMap::new();
 		for (name, future) in texture_futures {

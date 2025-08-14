@@ -503,7 +503,13 @@ impl TextureHandler {
 		Ok(TextureHandler { textures })
 	}
 
+	/// Returns a texture if it exists. See also getr() for a version that returns a Result.
 	pub fn get(&self, name: &str) -> Option<&Texture> {
 		self.textures.get(name)
+	}
+
+	/// Like get, but it returns a string error if the texture is not found.
+	pub fn getr(&self, name: &str) -> Result<&Texture, String> {
+		self.get(name).ok_or(format!("Texture \"{}\" was not found", name))
 	}
 }

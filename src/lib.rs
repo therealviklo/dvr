@@ -22,19 +22,18 @@ struct TestState {
     a: f32,
     b: f32,
     c: f32,
-    tex: Texture,
     font: font::Font,
     inp: Input,
     s: String,
+    th: TextureHandler,
 }
 
 impl TestState {
-    pub async fn new(dvr: &Dvr) -> Result<TestState, String> {
+    pub async fn new(dvr: &Dvr, th: TextureHandler) -> Result<TestState, String> {
         Ok(TestState {
             a: 0.0,
             b: 0.0,
             c: 0.0,
-            tex: dvr.load_texture("/pluto.png").await?,
             font: font::Font::new(
                 vec![
                     FontSheet::new(
@@ -69,6 +68,7 @@ impl TestState {
             ),
             inp: Input::new(&dvr, None)?,
             s: String::new(),
+            th,
         })
     }
 }
@@ -111,8 +111,9 @@ impl State for TestState {
 
     fn draw(&self, dvr: &Dvr) -> Result<(), String> {
         dvr.clear(0.1, 0.0, 0.1, 1.0);
+        let tex = self.th.getr("/pluto.png")?;
         dvr.draw(
-            &self.tex,
+            &tex,
             300.0 * f32::cos(self.b) + self.c,
             300.0 * f32::sin(self.b),
             Some((100.0, 100.0)),
@@ -120,7 +121,7 @@ impl State for TestState {
             self.a
         )?;
         dvr.draw(
-            &self.tex,
+            &tex,
             0.0,
             0.0,
             Some((500.0, 200.0)),
@@ -128,7 +129,7 @@ impl State for TestState {
             0.0
         )?;
         dvr.draw(
-            &self.tex,
+            &tex,
             0.0,
             0.0,
             Some((500.0, 100.0)),
@@ -136,7 +137,7 @@ impl State for TestState {
             f32::consts::PI
         )?;
         dvr.draw(
-            &self.tex,
+            &tex,
             0.0,
             0.0,
             Some((100.0, 500.0)),
@@ -174,7 +175,7 @@ impl State for TestState {
             font::VAlign::Bottom
         );
         let _ = dvr.draw(
-            &self.tex,
+            &tex,
             dvr.get_screen_width() as f32 * -0.5,
             dvr.get_screen_height() as f32 * 0.5,
             Some((100.0, 100.0)),
@@ -182,7 +183,7 @@ impl State for TestState {
             0.0
         );
         let _ = dvr.draw(
-            &self.tex,
+            &tex,
             dvr.get_screen_width() as f32 * -0.5,
             0.0,
             Some((100.0, 100.0)),
@@ -202,7 +203,7 @@ impl State for TestState {
         if let Some((x, y)) = self.inp.get_mouse_pos() {
             let (x, y) = dvr.native_mouse_coords_to_dvr((x, y));
             dvr.draw(
-                &self.tex,
+                &tex,
                 x,
                 y,
                 Some((100.0, 100.0)),
@@ -263,7 +264,7 @@ async fn start() -> Result<(), JsValue> {
         &dvr,
         &["/pluto.png", "/font.png"].map(str::to_string)
     ).await?;
-    let test_state = TestState::new(&dvr).await?;
+    let test_state = TestState::new(&dvr, texture_handler).await?;
     StateHandler::run(dvr, Box::new(test_state))?;
 
     Ok(())

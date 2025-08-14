@@ -503,7 +503,7 @@ impl TextureHandler {
 		Ok(TextureHandler { textures })
 	}
 
-	pub fn get(&self, name: String) -> Option<&Texture> {
-		self.textures.get(&name)
+	pub fn get(&self, name: &str) -> Option<&Texture> {
+		self.textures.get(name)
 	}
 }

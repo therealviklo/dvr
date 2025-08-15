@@ -262,7 +262,8 @@ async fn start() -> Result<(), JsValue> {
     let dvr = Dvr::new(context)?;
     let texture_handler = TextureHandler::new(
         &dvr,
-        &["/pluto.png", "/font.png"].map(str::to_string)
+        &["/pluto.png", "/font.png"],
+        |x| "/".to_string() + x
     ).await?;
     let test_state = TestState::new(&dvr, texture_handler).await?;
     StateHandler::run(dvr, Box::new(test_state))?;

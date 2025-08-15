@@ -464,10 +464,16 @@ pub struct TextureHandler {
 }
 
 impl TextureHandler {
-	pub async fn new(dvr: &Dvr, names: &[String]) -> Result<TextureHandler, String> {
+	/// Create a new texture handler. Names is a list of the images that should be loaded,
+	/// and name transform specifies how to change the names before they are passed to
+	/// the function loading the texture (e.g. you might add a prefix for the folder where
+	/// the images are located). When using get(), the version of the name that should be used
+	/// is the one that has not been passed through the transform, so if the tranform adds
+	/// ".png" to the name you should not include ".png" when calling get().
+	pub async fn new(dvr: &Dvr, names: &[&str], name_transform: impl Fn(&str) -> String) -> Result<TextureHandler, String> {
 		let mut texture_futures: Vec<(String, Box<dyn Future<Output = Result<Texture, String>> + Unpin>)> = Vec::new();
 		for name in names {
-			texture_futures.push((name.to_string(), Box::new(dvr.load_texture_internal(&name)?)));
+			texture_futures.push((name.to_string(), Box::new(dvr.load_texture_internal(&name_transform(name))?)));
 		}
 		let mut textures: HashMap<String, Texture> = HashMap::new();
 		for (name, future) in texture_futures {

@@ -29,7 +29,8 @@ struct TestState {
 }
 
 impl TestState {
-    pub async fn new(dvr: &Dvr, th: TextureHandler) -> Result<TestState, String> {
+    pub fn new(dvr: &Dvr, th: TextureHandler) -> Result<TestState, String> {
+        let mut th = th;
         Ok(TestState {
             a: 0.0,
             b: 0.0,
@@ -38,7 +39,7 @@ impl TestState {
                 vec![
                     FontSheet::new(
                         ('\0', '\u{00ff}'),
-                        dvr.load_texture("/font.png").await?,
+                        th.taker("font.png")?,
                         16,
                         16,
                         0.0,
@@ -265,7 +266,7 @@ async fn start() -> Result<(), JsValue> {
         &["pluto.png", "font.png"],
         |x| "/".to_string() + x
     ).await?;
-    let test_state = TestState::new(&dvr, texture_handler).await?;
+    let test_state = TestState::new(&dvr, texture_handler)?;
     StateHandler::run(dvr, Box::new(test_state))?;
 
     Ok(())

@@ -487,8 +487,19 @@ impl TextureHandler {
 		self.textures.get(name)
 	}
 
-	/// Like get, but it returns a string error if the texture is not found.
+	/// Like get(), but it returns a string error if the texture is not found.
 	pub fn getr(&self, name: &str) -> Result<&Texture, String> {
 		self.get(name).ok_or(format!("Texture \"{}\" was not found", name))
+	}
+
+	/// Returns a texture if it exists, removing it from the handler.
+	/// See also taker() for a version that returns a Result.
+	pub fn take(&mut self, name: &str) -> Option<Texture> {
+		self.textures.remove(name)
+	}
+
+	/// Like take(), but it returns a string error if the texture is not found.
+	pub fn taker(&mut self, name: &str) -> Result<Texture, String> {
+		self.take(name).ok_or(format!("Texture \"{}\" was not found", name))
 	}
 }

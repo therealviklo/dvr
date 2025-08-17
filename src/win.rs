@@ -2,7 +2,18 @@ use windows::{core::Interface, Win32::{Foundation::{HMODULE, HWND}, Graphics::{D
 use std::ptr::null_mut;
 use crate::win_utils::*;
 
+struct SwapChain {
+
+}
+
+impl SwapChain {
+	fn new() -> Result<SwapChain, String> {
+		Ok(SwapChain {  })
+	}
+}
+
 pub struct Dvr {
+	swapchain : Option<SwapChain>
 }
 
 impl Dvr {
@@ -67,7 +78,11 @@ impl Dvr {
 					.map_err(|_| "Failed to make window associations")?;
 			}
 
-			Ok(Dvr {})
+			let swapchain = SwapChain::new()?;
+
+			Ok(Dvr {
+				swapchain: Some(swapchain)
+			})
 		}
 	}
 }

@@ -17,7 +17,7 @@ pub struct Dvr {
 }
 
 impl Dvr {
-    pub fn new(hwnd: HWND) -> Result<Dvr, String> {
+    pub fn new(ctx: HWND) -> Result<Dvr, String> {
 		unsafe {
 			let sd = DXGI_SWAP_CHAIN_DESC {
 				BufferDesc: DXGI_MODE_DESC {
@@ -37,7 +37,7 @@ impl Dvr {
 				},
 				BufferUsage: DXGI_USAGE_RENDER_TARGET_OUTPUT,
 				BufferCount: 1,
-				OutputWindow: hwnd,
+				OutputWindow: ctx,
 				Windowed: true.into(),
 				SwapEffect: DXGI_SWAP_EFFECT_DISCARD,
 				Flags: 0,
@@ -74,7 +74,7 @@ impl Dvr {
 					dxgi_adapter.GetParent()
 					.map_err(|_| "Failed to get DXGI factory")?;
 
-				dxgi_factory.MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER | DXGI_MWA_NO_PRINT_SCREEN | DXGI_MWA_NO_WINDOW_CHANGES)
+				dxgi_factory.MakeWindowAssociation(ctx, DXGI_MWA_NO_ALT_ENTER | DXGI_MWA_NO_PRINT_SCREEN | DXGI_MWA_NO_WINDOW_CHANGES)
 					.map_err(|_| "Failed to make window associations")?;
 			}
 

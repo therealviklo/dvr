@@ -1,7 +1,7 @@
 use std::{cell::RefCell, collections::HashMap, future::{poll_fn, Future}, rc::Rc, task::{Poll, Waker}};
 use wasm_bindgen::prelude::*;
 use web_sys::{Event, HtmlCanvasElement, HtmlImageElement, WebGl2RenderingContext, WebGlBuffer, WebGlProgram, WebGlShader, WebGlTexture, WebGlUniformLocation};
-use crate::wasm_utils::log_errors;
+use crate::{wasm_utils::log_errors, DvrCtx};
 
 #[wasm_bindgen]
 extern "C" {
@@ -22,7 +22,7 @@ pub struct Dvr {
 }
 
 impl Dvr {
-    pub fn new(ctx: WebGl2RenderingContext) -> Result<Dvr, String> {
+    pub fn new(ctx: DvrCtx) -> Result<Dvr, String> {
 		let vs_source =
 		r##"
 		attribute vec4 aVertexPosition;

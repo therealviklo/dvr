@@ -16,6 +16,11 @@ mod win_utils;
 // pub mod font;
 // pub mod input;
 
+#[cfg(target_arch = "wasm32")]
+type DvrCtx = WebGl2RenderingContext;
+#[cfg(target_os = "windows")]
+type DvrCtx = windows::Win32::Foundation::HWND;
+
 // Test
 #[cfg(target_arch = "wasm32")]
 mod test_wasm;

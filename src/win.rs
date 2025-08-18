@@ -1,13 +1,13 @@
 use windows::{core::Interface, Win32::{Foundation::{HMODULE, HWND}, Graphics::{Direct3D::D3D_DRIVER_TYPE_HARDWARE, Direct3D11::{D3D11CreateDeviceAndSwapChain, ID3D11Device, ID3D11DeviceContext, ID3D11Resource, D3D11_CREATE_DEVICE_FLAG, D3D11_SDK_VERSION}, Dxgi::{Common::{DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_MODE_DESC, DXGI_MODE_SCALING_UNSPECIFIED, DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED, DXGI_RATIONAL, DXGI_SAMPLE_DESC}, IDXGIAdapter, IDXGIDevice, IDXGIFactory, IDXGISwapChain, DXGI_MWA_NO_ALT_ENTER, DXGI_MWA_NO_PRINT_SCREEN, DXGI_MWA_NO_WINDOW_CHANGES, DXGI_SWAP_CHAIN_DESC, DXGI_SWAP_EFFECT_DISCARD, DXGI_USAGE_RENDER_TARGET_OUTPUT}}}};
 use std::ptr::null_mut;
-use crate::win_utils::*;
+use crate::{win_utils::*, DvrCtx};
 
 struct SwapChain {
 
 }
 
 impl SwapChain {
-	fn new(swap: &IDXGISwapChain, device: &ID3D11Device, context: &ID3D11DeviceContext) -> Result<SwapChain, String> {
+	fn new(swap: &IDXGISwapChain, device: &ID3D11Device, context: &ID3D11DeviceContext, hwnd: HWND) -> Result<SwapChain, String> {
 		unsafe {
 			let backbuffer: ID3D11Resource = swap.GetBuffer(0)
 				.map_err(|_| "Failed to get back buffer")?;
@@ -21,7 +21,7 @@ pub struct Dvr {
 }
 
 impl Dvr {
-    pub fn new(ctx: HWND) -> Result<Dvr, String> {
+    pub fn new(ctx: DvrCtx) -> Result<Dvr, String> {
 		unsafe {
 			let sd = DXGI_SWAP_CHAIN_DESC {
 				BufferDesc: DXGI_MODE_DESC {
@@ -85,7 +85,8 @@ impl Dvr {
 			let swapchain = SwapChain::new(
 				&swapchain.ok_or("Swapchain was not created")?,
 				&device.ok_or("DirectX device was not created")?,
-				&context.ok_or("DirectX device contect was not created")?
+				&context.ok_or("DirectX device contect was not created")?,
+				ctx
 			)?;
 
 			Ok(Dvr {

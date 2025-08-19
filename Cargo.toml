@@ -15,6 +15,7 @@ wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4.50"
 js-sys = "0.3.77"
 queues = "1.0.2"
+directx_math = "0.2.3"
 
 [dependencies.windows]
 version = "0.61"

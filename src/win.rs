@@ -1,6 +1,7 @@
-use windows::{core::{Interface, PCSTR}, Win32::{Foundation::{GENERIC_READ, HMODULE, HWND, RECT}, Graphics::{Direct3D::{D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, D3D11_SRV_DIMENSION_TEXTURE2D, D3D_DRIVER_TYPE_HARDWARE}, Direct3D11::{D3D11CreateDeviceAndSwapChain, ID3D11BlendState, ID3D11Buffer, ID3D11Device, ID3D11DeviceContext, ID3D11InputLayout, ID3D11PixelShader, ID3D11RasterizerState, ID3D11RenderTargetView, ID3D11Resource, ID3D11SamplerState, ID3D11ShaderResourceView, ID3D11Texture2D, ID3D11VertexShader, D3D11_BIND_CONSTANT_BUFFER, D3D11_BIND_SHADER_RESOURCE, D3D11_BIND_VERTEX_BUFFER, D3D11_BLEND_DESC, D3D11_BLEND_INV_DEST_ALPHA, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_ONE, D3D11_BLEND_OP_ADD, D3D11_BLEND_SRC_ALPHA, D3D11_BUFFER_DESC, D3D11_COLOR_WRITE_ENABLE_ALL, D3D11_CPU_ACCESS_WRITE, D3D11_CREATE_DEVICE_FLAG, D3D11_CULL_BACK, D3D11_FILL_SOLID, D3D11_FILTER_MIN_MAG_MIP_LINEAR, D3D11_INPUT_ELEMENT_DESC, D3D11_INPUT_PER_VERTEX_DATA, D3D11_RASTERIZER_DESC, D3D11_RENDER_TARGET_BLEND_DESC, D3D11_SAMPLER_DESC, D3D11_SDK_VERSION, D3D11_SHADER_RESOURCE_VIEW_DESC, D3D11_SUBRESOURCE_DATA, D3D11_TEXTURE2D_DESC, D3D11_TEXTURE_ADDRESS_CLAMP, D3D11_USAGE_DEFAULT, D3D11_USAGE_DYNAMIC, D3D11_VIEWPORT}, Dxgi::{Common::{DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_R32G32_FLOAT, DXGI_MODE_DESC, DXGI_MODE_SCALING_UNSPECIFIED, DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED, DXGI_RATIONAL, DXGI_SAMPLE_DESC}, IDXGIAdapter, IDXGIDevice, IDXGIFactory, IDXGISwapChain, DXGI_MWA_NO_ALT_ENTER, DXGI_MWA_NO_PRINT_SCREEN, DXGI_MWA_NO_WINDOW_CHANGES, DXGI_SWAP_CHAIN_DESC, DXGI_SWAP_EFFECT_DISCARD, DXGI_USAGE_RENDER_TARGET_OUTPUT}, Imaging::{CLSID_WICImagingFactory, GUID_WICPixelFormat32bppBGRA, IWICBitmapDecoder, IWICImagingFactory, IWICPixelFormatInfo, WICBitmapDitherTypeNone, WICBitmapPaletteTypeCustom, WICDecodeMetadataCacheOnDemand}}, System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER}, UI::{Shell::SHCreateMemStream, WindowsAndMessaging::GetClientRect}}};
+use windows::{core::{Interface, PCSTR}, Win32::{Foundation::{GENERIC_READ, HMODULE, HWND, RECT}, Graphics::{Direct3D::{D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, D3D11_SRV_DIMENSION_TEXTURE2D, D3D_DRIVER_TYPE_HARDWARE}, Direct3D11::{D3D11CreateDeviceAndSwapChain, ID3D11BlendState, ID3D11Buffer, ID3D11Device, ID3D11DeviceContext, ID3D11InputLayout, ID3D11PixelShader, ID3D11RasterizerState, ID3D11RenderTargetView, ID3D11Resource, ID3D11SamplerState, ID3D11ShaderResourceView, ID3D11Texture2D, ID3D11VertexShader, D3D11_BIND_CONSTANT_BUFFER, D3D11_BIND_SHADER_RESOURCE, D3D11_BIND_VERTEX_BUFFER, D3D11_BLEND_DESC, D3D11_BLEND_INV_DEST_ALPHA, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_ONE, D3D11_BLEND_OP_ADD, D3D11_BLEND_SRC_ALPHA, D3D11_BUFFER_DESC, D3D11_COLOR_WRITE_ENABLE_ALL, D3D11_CPU_ACCESS_WRITE, D3D11_CREATE_DEVICE_FLAG, D3D11_CULL_BACK, D3D11_FILL_SOLID, D3D11_FILTER_MIN_MAG_MIP_LINEAR, D3D11_INPUT_ELEMENT_DESC, D3D11_INPUT_PER_VERTEX_DATA, D3D11_MAP_WRITE_DISCARD, D3D11_RASTERIZER_DESC, D3D11_RENDER_TARGET_BLEND_DESC, D3D11_SAMPLER_DESC, D3D11_SDK_VERSION, D3D11_SHADER_RESOURCE_VIEW_DESC, D3D11_SUBRESOURCE_DATA, D3D11_TEXTURE2D_DESC, D3D11_TEXTURE_ADDRESS_CLAMP, D3D11_USAGE_DEFAULT, D3D11_USAGE_DYNAMIC, D3D11_VIEWPORT}, Dxgi::{Common::{DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_R32G32_FLOAT, DXGI_MODE_DESC, DXGI_MODE_SCALING_UNSPECIFIED, DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED, DXGI_RATIONAL, DXGI_SAMPLE_DESC}, IDXGIAdapter, IDXGIDevice, IDXGIFactory, IDXGISwapChain, DXGI_MWA_NO_ALT_ENTER, DXGI_MWA_NO_PRINT_SCREEN, DXGI_MWA_NO_WINDOW_CHANGES, DXGI_SWAP_CHAIN_DESC, DXGI_SWAP_EFFECT_DISCARD, DXGI_USAGE_RENDER_TARGET_OUTPUT}, Imaging::{CLSID_WICImagingFactory, GUID_WICPixelFormat32bppBGRA, IWICBitmapDecoder, IWICImagingFactory, IWICPixelFormatInfo, WICBitmapDitherTypeNone, WICBitmapPaletteTypeCustom, WICDecodeMetadataCacheOnDemand}}, System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER}, UI::{Shell::SHCreateMemStream, WindowsAndMessaging::GetClientRect}}};
 use std::{ffi::{c_float, CString}, ptr::{null, null_mut}};
 use windows_strings::*;
+use directx_math::*;
 use crate::{win_utils::*, DvrCtx};
 
 mod shader_data;
@@ -107,6 +108,96 @@ impl Dvr {
 		}
 	}
 
+	pub fn draw(&self, texture: &Texture, x: f32, y: f32, size: Option<(f32, f32)>, tex_pos_size: Option<((f32, f32), (f32, f32))>, angle: f32) -> Result<(), String> {
+		let (width, height): (f32, f32) = match size {
+			Some(size) => size,
+			None => (texture.get_width() as f32, texture.get_height() as f32),
+		};
+		let ((src_x, src_y), (src_width, src_height)): ((f32, f32), (f32, f32)) = match tex_pos_size {
+			Some(pos_size) => pos_size,
+			None => ((0.0, 0.0), (texture.get_width() as f32, texture.get_height() as f32)),
+		};
+		unsafe {
+			// TODO: does the clone work?
+			self.context.PSSetShaderResources(0, Some(&[Some(texture.tex_view.clone())]));
+
+			let swapchain = self.swapchain.as_ref().ok_or("Swapchain is not available")?;
+
+			let mut msr_ps = Default::default();
+			self.context.Map(
+				&swapchain.colour_shift_buffer,
+				0,
+				D3D11_MAP_WRITE_DISCARD,
+				0,
+				Some(&mut msr_ps)
+			).map_err(|_| "Failed to map colour shift buffer")?;
+
+			// TODO: Replace with actual colour shift
+			let clr_shift: [c_float; 4] = [1.0, 1.0, 1.0, 1.0];
+			std::ptr::copy_nonoverlapping(
+				clr_shift.as_ptr(),
+				msr_ps.pData as *mut c_float,
+				clr_shift.len()
+			);
+			self.context.Unmap(&swapchain.colour_shift_buffer, 0);
+
+			// TODO: actual desired size
+			let desired_width = 500.0;
+			let desired_height = 250.0;
+
+			let scaling_factor = f32::min(desired_width / swapchain.width, desired_height / swapchain.height);
+
+			#[repr(C)]
+			struct Mtcs {
+				mtx: XMMATRIX,
+				tex_mtx: XMMATRIX,
+			}
+			let mtcs = Mtcs {
+				mtx: XMMatrixTranspose(
+					*(XMMatrix(XMMatrixScaling(width, height, 1.0)) *
+					XMMatrix(XMMatrixRotationZ(angle)) *
+					XMMatrix(XMMatrixTranslation(x * 2.0, y * 2.0, 0.0)) *
+					XMMatrix(XMMatrixScaling(
+						1.0 / scaling_factor / swapchain.width,
+						1.0 / scaling_factor / swapchain.height,
+						1.0
+					)))
+				),
+				tex_mtx: XMMatrixTranspose(
+					*(XMMatrix(XMMatrixScaling(
+						src_width / texture.get_width() as f32,
+						src_height / texture.get_height() as f32,
+						1.0
+					)) *
+					XMMatrix(XMMatrixTranslation(
+						src_x / texture.get_width() as f32,
+						src_y / texture.get_height() as f32,
+						0.0
+					)))
+				)
+			};
+
+			let mut msr = Default::default();
+			self.context.Map(
+				&swapchain.matrix_buffer,
+				0,
+				D3D11_MAP_WRITE_DISCARD,
+				0,
+				Some(&mut msr)
+			).map_err(|_| "Failed to map matrix buffer")?;
+
+			std::ptr::copy_nonoverlapping(
+				&mtcs as *const Mtcs as *const u8,
+				msr.pData as *mut u8,
+				std::mem::size_of::<Mtcs>()
+			);
+			self.context.Unmap(&swapchain.matrix_buffer, 0);
+
+			self.context.Draw(6, 0);
+		}
+		Ok(())
+	}
+
 	pub async fn load_texture(&self, filename: &str) -> Result<Texture, String> {
 		unsafe {
 			let decoder = self.wic_factory.CreateDecoderFromFilename(
@@ -134,8 +225,8 @@ impl Dvr {
 }
 
 struct SwapChain {
-	// width: c_float,
-	// height c_float,
+	width: c_float,
+	height: c_float,
 	target: ID3D11RenderTargetView,
 	vertex_buffer: ID3D11Buffer,
 	colour_shift_buffer: ID3D11Buffer,
@@ -390,6 +481,8 @@ impl SwapChain {
 			);
 
 			Ok(SwapChain {
+				width: width as f32,
+				height: height as f32,
 				target: target.ok_or("Target was not created")?,
 				vertex_buffer: vertex_buffer.ok_or("Vertex buffer was not created")?,
 				colour_shift_buffer: colour_shift_buffer.ok_or("Colour shift buffer was not created")?,

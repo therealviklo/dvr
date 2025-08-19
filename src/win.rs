@@ -108,6 +108,14 @@ impl Dvr {
 		}
 	}
 
+	pub fn clear(&self, r: f32, g: f32, b: f32, a: f32) -> Result<(), String> {
+		let clr_arr = [r, g, b, a];
+		unsafe {
+			self.context.ClearRenderTargetView(&self.get_swapchain()?.target, &clr_arr);
+		}
+		Ok(())
+	}
+
 	pub fn draw(&self, texture: &Texture, x: f32, y: f32, size: Option<(f32, f32)>, tex_pos_size: Option<((f32, f32), (f32, f32))>, angle: f32) -> Result<(), String> {
 		let (width, height): (f32, f32) = match size {
 			Some(size) => size,
@@ -121,7 +129,7 @@ impl Dvr {
 			// TODO: does the clone work?
 			self.context.PSSetShaderResources(0, Some(&[Some(texture.tex_view.clone())]));
 
-			let swapchain = self.swapchain.as_ref().ok_or("Swapchain is not available")?;
+			let swapchain = self.get_swapchain()?;
 
 			let mut msr_ps = Default::default();
 			self.context.Map(
@@ -221,6 +229,10 @@ impl Dvr {
 			).map_err(|_| "Failed to create decoder for image")?;
 			Texture::new(decoder, &self.device, &self.wic_factory)
 		}
+	}
+
+	fn get_swapchain(&self) -> Result<&SwapChain, String> {
+		self.swapchain.as_ref().ok_or(String::from("Swapchain is not available"))
 	}
 }
 

@@ -124,9 +124,10 @@ impl Dvr {
 		Ok(())
 	}
 
-	pub fn clear(&self, r: f32, g: f32, b: f32, a: f32) {
+	pub fn clear(&self, r: f32, g: f32, b: f32, a: f32) -> Result<(), String> {
 		self.ctx.clear_color(r, g, b, a);
 		self.ctx.clear(WebGl2RenderingContext::COLOR_BUFFER_BIT);
+		Ok(())
 	}
 
 	pub fn draw(&self, texture: &Texture, x: f32, y: f32, size: Option<(f32, f32)>, tex_pos_size: Option<((f32, f32), (f32, f32))>, angle: f32) -> Result<(), String> {

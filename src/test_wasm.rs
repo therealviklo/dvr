@@ -100,7 +100,7 @@ impl State for TestState {
     }
 
     fn draw(&self, dvr: &Dvr) -> Result<(), String> {
-        dvr.clear(0.1, 0.0, 0.1, 1.0);
+        dvr.clear(0.1, 0.0, 0.1, 1.0)?;
         let tex = self.th.getr("pluto.png")?;
         dvr.draw(
             &tex,

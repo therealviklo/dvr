@@ -1,5 +1,5 @@
-use windows::{core::{Interface, PCSTR}, Win32::{Foundation::{HMODULE, HWND, RECT}, Graphics::{Direct3D::{D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, D3D_DRIVER_TYPE_HARDWARE}, Direct3D11::{D3D11CreateDeviceAndSwapChain, ID3D11BlendState, ID3D11Buffer, ID3D11Device, ID3D11DeviceContext, ID3D11InputLayout, ID3D11PixelShader, ID3D11RasterizerState, ID3D11RenderTargetView, ID3D11Resource, ID3D11SamplerState, ID3D11VertexShader, D3D11_BIND_CONSTANT_BUFFER, D3D11_BIND_VERTEX_BUFFER, D3D11_BLEND_DESC, D3D11_BLEND_INV_DEST_ALPHA, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_ONE, D3D11_BLEND_OP_ADD, D3D11_BLEND_SRC_ALPHA, D3D11_BUFFER_DESC, D3D11_COLOR_WRITE_ENABLE_ALL, D3D11_COMPARISON_FUNC, D3D11_CPU_ACCESS_WRITE, D3D11_CREATE_DEVICE_FLAG, D3D11_CULL_BACK, D3D11_FILL_SOLID, D3D11_FILTER_MIN_MAG_MIP_LINEAR, D3D11_INPUT_ELEMENT_DESC, D3D11_INPUT_PER_VERTEX_DATA, D3D11_RASTERIZER_DESC, D3D11_RENDER_TARGET_BLEND_DESC, D3D11_SAMPLER_DESC, D3D11_SDK_VERSION, D3D11_SUBRESOURCE_DATA, D3D11_TEXTURE_ADDRESS_CLAMP, D3D11_USAGE_DEFAULT, D3D11_USAGE_DYNAMIC, D3D11_VIEWPORT}, Dxgi::{Common::{DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_R32G32_FLOAT, DXGI_MODE_DESC, DXGI_MODE_SCALING_UNSPECIFIED, DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED, DXGI_RATIONAL, DXGI_SAMPLE_DESC}, IDXGIAdapter, IDXGIDevice, IDXGIFactory, IDXGISwapChain, DXGI_MWA_NO_ALT_ENTER, DXGI_MWA_NO_PRINT_SCREEN, DXGI_MWA_NO_WINDOW_CHANGES, DXGI_SWAP_CHAIN_DESC, DXGI_SWAP_EFFECT_DISCARD, DXGI_USAGE_RENDER_TARGET_OUTPUT}, Imaging::{CLSID_WICImagingFactory, IWICImagingFactory}}, System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER}, UI::WindowsAndMessaging::GetClientRect}};
-use std::{ffi::{c_float, CString}, ptr::null_mut};
+use windows::{core::{Interface, GUID, PCSTR}, Win32::{Foundation::{HMODULE, HWND, RECT}, Graphics::{Direct3D::{D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, D3D11_SRV_DIMENSION_TEXTURE2D, D3D_DRIVER_TYPE_HARDWARE}, Direct3D11::{D3D11CreateDeviceAndSwapChain, ID3D11BlendState, ID3D11Buffer, ID3D11Device, ID3D11DeviceContext, ID3D11InputLayout, ID3D11PixelShader, ID3D11RasterizerState, ID3D11RenderTargetView, ID3D11Resource, ID3D11SamplerState, ID3D11ShaderResourceView, ID3D11Texture2D, ID3D11VertexShader, D3D11_BIND_CONSTANT_BUFFER, D3D11_BIND_SHADER_RESOURCE, D3D11_BIND_VERTEX_BUFFER, D3D11_BLEND_DESC, D3D11_BLEND_INV_DEST_ALPHA, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_ONE, D3D11_BLEND_OP_ADD, D3D11_BLEND_SRC_ALPHA, D3D11_BUFFER_DESC, D3D11_COLOR_WRITE_ENABLE_ALL, D3D11_CPU_ACCESS_WRITE, D3D11_CREATE_DEVICE_FLAG, D3D11_CULL_BACK, D3D11_FILL_SOLID, D3D11_FILTER_MIN_MAG_MIP_LINEAR, D3D11_INPUT_ELEMENT_DESC, D3D11_INPUT_PER_VERTEX_DATA, D3D11_RASTERIZER_DESC, D3D11_RENDER_TARGET_BLEND_DESC, D3D11_SAMPLER_DESC, D3D11_SDK_VERSION, D3D11_SHADER_RESOURCE_VIEW_DESC, D3D11_SUBRESOURCE_DATA, D3D11_TEXTURE2D_DESC, D3D11_TEXTURE_ADDRESS_CLAMP, D3D11_USAGE_DEFAULT, D3D11_USAGE_DYNAMIC, D3D11_VIEWPORT}, Dxgi::{Common::{DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_R32G32_FLOAT, DXGI_MODE_DESC, DXGI_MODE_SCALING_UNSPECIFIED, DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED, DXGI_RATIONAL, DXGI_SAMPLE_DESC}, IDXGIAdapter, IDXGIDevice, IDXGIFactory, IDXGISwapChain, DXGI_MWA_NO_ALT_ENTER, DXGI_MWA_NO_PRINT_SCREEN, DXGI_MWA_NO_WINDOW_CHANGES, DXGI_SWAP_CHAIN_DESC, DXGI_SWAP_EFFECT_DISCARD, DXGI_USAGE_RENDER_TARGET_OUTPUT}, Imaging::{CLSID_WICImagingFactory, GUID_WICPixelFormat32bppBGRA, IWICBitmapDecoder, IWICBitmapFrameDecode, IWICComponentInfo, IWICFormatConverter, IWICImagingFactory, IWICPixelFormatInfo, WICBitmapDitherTypeNone, WICBitmapPaletteTypeCustom}}, System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER}, UI::WindowsAndMessaging::GetClientRect}};
+use std::{ffi::{c_float, CString}, ptr::{null, null_mut}};
 use crate::{win_utils::*, DvrCtx};
 
 mod shader_data;
@@ -92,6 +92,10 @@ impl Dvr {
 			})
 		}
 	}
+
+	// pub async fn load_texture(&self, url: &str) -> Result<Texture, String> {
+
+	// }
 }
 
 struct SwapChain {
@@ -139,13 +143,11 @@ impl SwapChain {
 				Usage: D3D11_USAGE_DEFAULT,
 				BindFlags: D3D11_BIND_VERTEX_BUFFER.0 as u32,
 				StructureByteStride: size_of::<Vertex>() as u32,
-				CPUAccessFlags: Default::default(),
-				MiscFlags: Default::default(),
+				..Default::default()
 			};
 			let srd = D3D11_SUBRESOURCE_DATA {
 				pSysMem: &raw const vertices[0] as *const std::ffi::c_void,
-				SysMemPitch: Default::default(),
-				SysMemSlicePitch: Default::default(),
+				..Default::default()
 			};
 			let mut vertex_buffer: Option<ID3D11Buffer> = None;
 			device.CreateBuffer(&bd, Some(&srd), Some(&mut vertex_buffer))
@@ -166,13 +168,11 @@ impl SwapChain {
 				Usage: D3D11_USAGE_DYNAMIC,
 				CPUAccessFlags: D3D11_CPU_ACCESS_WRITE.0 as u32,
 				ByteWidth: (size_of::<c_float>() * colour_shift.len()) as u32,
-				MiscFlags: Default::default(),
-				StructureByteStride: Default::default(),
+				..Default::default()
 			};
 			let msd_ps = D3D11_SUBRESOURCE_DATA {
 				pSysMem: &raw const colour_shift[0] as *const std::ffi::c_void,
-				SysMemPitch: Default::default(),
-				SysMemSlicePitch: Default::default(),
+				..Default::default()
 			};
 			let mut colour_shift_buffer: Option<ID3D11Buffer> = None;
 			device.CreateBuffer(&mbd_ps, Some(&msd_ps), Some(&mut colour_shift_buffer))
@@ -205,13 +205,11 @@ impl SwapChain {
 				Usage: D3D11_USAGE_DYNAMIC,
 				CPUAccessFlags: D3D11_CPU_ACCESS_WRITE.0 as u32,
 				ByteWidth: size_of::<Mtcs>() as u32,
-				MiscFlags: Default::default(),
-				StructureByteStride: Default::default(),
+				..Default::default()
 			};
 			let msd = D3D11_SUBRESOURCE_DATA {
 				pSysMem: &raw const mtcs as *const std::ffi::c_void,
-				SysMemPitch: Default::default(),
-				SysMemSlicePitch: Default::default(),
+				..Default::default()
 			};
 			let mut matrix_buffer: Option<ID3D11Buffer> = None;
 			device.CreateBuffer(&mbd, Some(&msd), Some(&mut matrix_buffer))
@@ -314,12 +312,7 @@ impl SwapChain {
 				AddressU: D3D11_TEXTURE_ADDRESS_CLAMP,
 				AddressV: D3D11_TEXTURE_ADDRESS_CLAMP,
 				AddressW: D3D11_TEXTURE_ADDRESS_CLAMP,
-				MipLODBias: Default::default(),
-				MaxAnisotropy: Default::default(),
-				ComparisonFunc: Default::default(),
-				BorderColor: Default::default(),
-				MinLOD: Default::default(),
-				MaxLOD: Default::default(),
+				..Default::default()
 			};
 			let mut sampler_state: Option<ID3D11SamplerState> = None;
 			device.CreateSamplerState(&sampler_desc, Some(&mut sampler_state))
@@ -348,8 +341,7 @@ impl SwapChain {
 					Default::default(),
 					Default::default(),
 				],
-				AlphaToCoverageEnable: Default::default(),
-				IndependentBlendEnable: Default::default(),
+				..Default::default()
 			};
 			let mut blend_state: Option<ID3D11BlendState> = None;
 			device.CreateBlendState(&bsd, Some(&mut blend_state))
@@ -375,5 +367,143 @@ impl SwapChain {
 				sampler_state: sampler_state.ok_or("Sampler state was not created")?,
 			})
 		}
+	}
+}
+
+pub struct Texture {
+	tex: ID3D11Texture2D,
+	tex_view: ID3D11ShaderResourceView,
+	size: (u32, u32),
+}
+
+impl Texture {
+	fn create_texture_with_decoder(decoder: IWICBitmapDecoder, device: &ID3D11Device, wic_factory: &IWICImagingFactory) -> Result<Texture, String> {
+		unsafe {
+			let frame = decoder.GetFrame(0)
+				.map_err(|_| "Failed to get image frame")?;
+
+			let pixel_format = frame.GetPixelFormat()
+				.map_err(|_| "Failed to get pixel format")?;
+
+			let mut width = 0u32;
+			let mut height = 0u32;
+			let row_pitch;
+			let buf_size;
+			let mut buf: Vec<u8>;
+
+			// Check if conversion is needed
+			if pixel_format != GUID_WICPixelFormat32bppBGRA {
+				// Conversion is needed
+
+				let format_converter = wic_factory.CreateFormatConverter()
+					.map_err(|_| "Failed to create WIC format converter")?;
+
+				format_converter.Initialize(
+					&frame,
+					&GUID_WICPixelFormat32bppBGRA,
+					WICBitmapDitherTypeNone,
+					None,
+					0.0,
+					WICBitmapPaletteTypeCustom,
+				).map_err(|_| "Failed to initialise WIC format converter")?;
+
+				format_converter.GetSize(&mut width, &mut height)
+					.map_err(|_| "Failed to get image size")?;
+
+				let new_pixel_format = format_converter.GetPixelFormat()
+					.map_err(|_| "Failed to get pixel format")?;
+				if new_pixel_format != GUID_WICPixelFormat32bppBGRA {
+					return Err("Failed to convert image format".to_string());
+				}
+
+				let compinfo = wic_factory.CreateComponentInfo(&new_pixel_format)
+					.map_err(|_| "Failed to get pixel format info")?;
+
+				let pfi: IWICPixelFormatInfo = compinfo.cast()
+					.map_err(|_| "Failed to get pixel format info")?;
+				let bpp = pfi.GetBitsPerPixel()
+					.map_err(|_| "Failed to get bits per pixel")?;
+
+				row_pitch = ((width as usize * bpp as usize) + 7) / 8;
+				buf_size = row_pitch * height as usize;
+				buf = vec![0u8; buf_size];
+
+				format_converter.CopyPixels(
+					null(),
+					row_pitch as u32,
+					buf.as_mut_slice(),
+				).map_err(|_| "Failed to copy pixels")?;
+			} else {
+				// Conversion is not needed
+
+				frame.GetSize(&mut width, &mut height).map_err(|_| "Failed to get image size")?;
+
+				let compinfo = wic_factory.CreateComponentInfo(&pixel_format)
+					.map_err(|_| "Failed to get pixel format info")?;
+
+				let pfi: IWICPixelFormatInfo = compinfo.cast()
+					.map_err(|_| "Failed to get pixel format info")?;
+				let bpp = pfi.GetBitsPerPixel()
+					.map_err(|_| "Failed to get bits per pixel")?;
+
+				row_pitch = ((width as usize * bpp as usize) + 7) / 8;
+				buf_size = row_pitch * height as usize;
+				buf = vec![0u8; buf_size];
+
+				frame.CopyPixels(
+					null(),
+					row_pitch as u32,
+					buf.as_mut_slice()
+				).map_err(|_| "Failed to copy pixels")?;
+			}
+
+			let tex_desc = D3D11_TEXTURE2D_DESC {
+				Width: width,
+				Height: height,
+				ArraySize: 1,
+				Format: DXGI_FORMAT_B8G8R8A8_UNORM,
+				SampleDesc: DXGI_SAMPLE_DESC { Count: 1, Quality: 0 },
+				Usage: D3D11_USAGE_DEFAULT,
+				BindFlags: D3D11_BIND_SHADER_RESOURCE.0 as u32,
+				MipLevels: 1,
+				..Default::default()
+			};
+			let tex_sd = D3D11_SUBRESOURCE_DATA {
+				pSysMem: buf.as_ptr() as *const std::ffi::c_void,
+				SysMemPitch: row_pitch as u32,
+				SysMemSlicePitch: buf_size as u32,
+			};
+
+			let mut tex = None;
+			device.CreateTexture2D(&tex_desc, Some(&tex_sd), Some(&mut tex))
+				.map_err(|_| "Failed to create texture")?;
+
+			let srv_desc = D3D11_SHADER_RESOURCE_VIEW_DESC {
+				Format: DXGI_FORMAT_B8G8R8A8_UNORM,
+				ViewDimension: D3D11_SRV_DIMENSION_TEXTURE2D,
+				Anonymous: Default::default(),
+			};
+			let mut tex_view = None;
+			device.CreateShaderResourceView(tex.as_ref().unwrap(), Some(&srv_desc), Some(&mut tex_view))
+				.map_err(|_| "Failed to create texture view")?;
+
+			Ok(Texture {
+				tex: tex.ok_or("Texture was not created")?,
+				tex_view: tex_view.ok_or("Texture view was not created")?,
+				size: (width, height),
+			})
+		}
+	}
+
+	pub fn get_size(&self) -> (u32, u32) {
+		self.size
+	}
+
+	pub fn get_width(&self) -> u32 {
+		self.size.0
+	}
+
+	pub fn get_height(&self) -> u32 {
+		self.size.1
 	}
 }

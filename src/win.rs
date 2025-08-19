@@ -1,11 +1,22 @@
-use windows::{core::{Interface, PCSTR}, Win32::{Foundation::{HMODULE, HWND, RECT}, Graphics::{Direct3D::{D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, D3D_DRIVER_TYPE_HARDWARE}, Direct3D11::{D3D11CreateDeviceAndSwapChain, ID3D11Buffer, ID3D11Device, ID3D11DeviceContext, ID3D11InputLayout, ID3D11PixelShader, ID3D11RenderTargetView, ID3D11Resource, ID3D11VertexShader, D3D11_BIND_CONSTANT_BUFFER, D3D11_BIND_VERTEX_BUFFER, D3D11_BUFFER_DESC, D3D11_CPU_ACCESS_WRITE, D3D11_CREATE_DEVICE_FLAG, D3D11_INPUT_ELEMENT_DESC, D3D11_INPUT_PER_VERTEX_DATA, D3D11_SDK_VERSION, D3D11_SUBRESOURCE_DATA, D3D11_USAGE_DEFAULT, D3D11_USAGE_DYNAMIC, D3D11_VIEWPORT}, Dxgi::{Common::{DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_R32G32_FLOAT, DXGI_MODE_DESC, DXGI_MODE_SCALING_UNSPECIFIED, DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED, DXGI_RATIONAL, DXGI_SAMPLE_DESC}, IDXGIAdapter, IDXGIDevice, IDXGIFactory, IDXGISwapChain, DXGI_MWA_NO_ALT_ENTER, DXGI_MWA_NO_PRINT_SCREEN, DXGI_MWA_NO_WINDOW_CHANGES, DXGI_SWAP_CHAIN_DESC, DXGI_SWAP_EFFECT_DISCARD, DXGI_USAGE_RENDER_TARGET_OUTPUT}}, UI::WindowsAndMessaging::GetClientRect}};
-use std::{ffi::{c_float, CString}, ptr::{null, null_mut}};
+use windows::{core::{Interface, PCSTR}, Win32::{Foundation::{HMODULE, HWND, RECT}, Graphics::{Direct3D::{D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, D3D_DRIVER_TYPE_HARDWARE}, Direct3D11::{D3D11CreateDeviceAndSwapChain, ID3D11BlendState, ID3D11Buffer, ID3D11Device, ID3D11DeviceContext, ID3D11InputLayout, ID3D11PixelShader, ID3D11RasterizerState, ID3D11RenderTargetView, ID3D11Resource, ID3D11SamplerState, ID3D11VertexShader, D3D11_BIND_CONSTANT_BUFFER, D3D11_BIND_VERTEX_BUFFER, D3D11_BLEND_DESC, D3D11_BLEND_INV_DEST_ALPHA, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_ONE, D3D11_BLEND_OP_ADD, D3D11_BLEND_SRC_ALPHA, D3D11_BUFFER_DESC, D3D11_COLOR_WRITE_ENABLE_ALL, D3D11_COMPARISON_FUNC, D3D11_CPU_ACCESS_WRITE, D3D11_CREATE_DEVICE_FLAG, D3D11_CULL_BACK, D3D11_FILL_SOLID, D3D11_FILTER_MIN_MAG_MIP_LINEAR, D3D11_INPUT_ELEMENT_DESC, D3D11_INPUT_PER_VERTEX_DATA, D3D11_RASTERIZER_DESC, D3D11_RENDER_TARGET_BLEND_DESC, D3D11_SAMPLER_DESC, D3D11_SDK_VERSION, D3D11_SUBRESOURCE_DATA, D3D11_TEXTURE_ADDRESS_CLAMP, D3D11_USAGE_DEFAULT, D3D11_USAGE_DYNAMIC, D3D11_VIEWPORT}, Dxgi::{Common::{DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_R32G32_FLOAT, DXGI_MODE_DESC, DXGI_MODE_SCALING_UNSPECIFIED, DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED, DXGI_RATIONAL, DXGI_SAMPLE_DESC}, IDXGIAdapter, IDXGIDevice, IDXGIFactory, IDXGISwapChain, DXGI_MWA_NO_ALT_ENTER, DXGI_MWA_NO_PRINT_SCREEN, DXGI_MWA_NO_WINDOW_CHANGES, DXGI_SWAP_CHAIN_DESC, DXGI_SWAP_EFFECT_DISCARD, DXGI_USAGE_RENDER_TARGET_OUTPUT}}, UI::WindowsAndMessaging::GetClientRect}};
+use std::{ffi::{c_float, CString}, ptr::null_mut};
 use crate::{win_utils::*, DvrCtx};
 
 mod shader_data;
 
 struct SwapChain {
-
+	// width: c_float,
+	// height c_float,
+	target: ID3D11RenderTargetView,
+	vertex_buffer: ID3D11Buffer,
+	colour_shift_buffer: ID3D11Buffer,
+	matrix_buffer: ID3D11Buffer,
+	pixel_shader: ID3D11PixelShader,
+	vertex_shader: ID3D11VertexShader,
+	input_layout: ID3D11InputLayout,
+	blend_state: ID3D11BlendState,
+	rasterizer_state: ID3D11RasterizerState,
+	sampler_state: ID3D11SamplerState,
 }
 
 impl SwapChain {
@@ -38,13 +49,13 @@ impl SwapChain {
 				Usage: D3D11_USAGE_DEFAULT,
 				BindFlags: D3D11_BIND_VERTEX_BUFFER.0 as u32,
 				StructureByteStride: size_of::<Vertex>() as u32,
-				CPUAccessFlags: 0,
-				MiscFlags: 0,
+				CPUAccessFlags: Default::default(),
+				MiscFlags: Default::default(),
 			};
 			let srd = D3D11_SUBRESOURCE_DATA {
 				pSysMem: &raw const vertices[0] as *const std::ffi::c_void,
-				SysMemPitch: 0,
-				SysMemSlicePitch: 0,
+				SysMemPitch: Default::default(),
+				SysMemSlicePitch: Default::default(),
 			};
 			let mut vertex_buffer: Option<ID3D11Buffer> = None;
 			device.CreateBuffer(&bd, Some(&srd), Some(&mut vertex_buffer))
@@ -65,18 +76,20 @@ impl SwapChain {
 				Usage: D3D11_USAGE_DYNAMIC,
 				CPUAccessFlags: D3D11_CPU_ACCESS_WRITE.0 as u32,
 				ByteWidth: (size_of::<c_float>() * colour_shift.len()) as u32,
-				MiscFlags: 0,
-				StructureByteStride: 0,
+				MiscFlags: Default::default(),
+				StructureByteStride: Default::default(),
 			};
 			let msd_ps = D3D11_SUBRESOURCE_DATA {
 				pSysMem: &raw const colour_shift[0] as *const std::ffi::c_void,
-				SysMemPitch: 0,
-				SysMemSlicePitch: 0,
+				SysMemPitch: Default::default(),
+				SysMemSlicePitch: Default::default(),
 			};
 			let mut colour_shift_buffer: Option<ID3D11Buffer> = None;
 			device.CreateBuffer(&mbd_ps, Some(&msd_ps), Some(&mut colour_shift_buffer))
 				.map_err(|_| "Failed to create colour shift buffer")?;
-			context.PSSetConstantBuffers(0, Some(&[colour_shift_buffer]));
+			let mut cs_arr = [colour_shift_buffer];
+			context.PSSetConstantBuffers(0, Some(&cs_arr));
+			let colour_shift_buffer = cs_arr[0].take();
 
 			#[repr(C)]
 			struct Mtcs {
@@ -102,18 +115,20 @@ impl SwapChain {
 				Usage: D3D11_USAGE_DYNAMIC,
 				CPUAccessFlags: D3D11_CPU_ACCESS_WRITE.0 as u32,
 				ByteWidth: size_of::<Mtcs>() as u32,
-				MiscFlags: 0,
-				StructureByteStride: 0
+				MiscFlags: Default::default(),
+				StructureByteStride: Default::default(),
 			};
 			let msd = D3D11_SUBRESOURCE_DATA {
 				pSysMem: &raw const mtcs as *const std::ffi::c_void,
-				SysMemPitch: 0,
-				SysMemSlicePitch: 0,
+				SysMemPitch: Default::default(),
+				SysMemSlicePitch: Default::default(),
 			};
 			let mut matrix_buffer: Option<ID3D11Buffer> = None;
 			device.CreateBuffer(&mbd, Some(&msd), Some(&mut matrix_buffer))
 				.map_err(|_| "Failed to create matrix buffer")?;
-			context.VSSetConstantBuffers(0, Some(&[matrix_buffer]));
+			let mut mb_arr = [matrix_buffer];
+			context.VSSetConstantBuffers(0, Some(&mb_arr));
+			let matrix_buffer = mb_arr[0].take();
 
 			let mut pixel_shader: Option<ID3D11PixelShader> = None;
 			device.CreatePixelShader(
@@ -154,9 +169,11 @@ impl SwapChain {
 			let mut input_layout: Option<ID3D11InputLayout> = None;
 			device.CreateInputLayout(&ied, &shader_data::VERTEX_SHADER_DATA, Some(&mut input_layout))
 				.map_err(|_| "Failed to create input layout")?;
-			context.IASetInputLayout(&input_layout.ok_or("Input layout was not created")?);
+			context.IASetInputLayout(input_layout.as_ref().ok_or("Input layout was not created")?);
 
-			context.OMSetRenderTargets(Some(&[target]), None);
+			let mut rt_arr = [target];
+			context.OMSetRenderTargets(Some(&rt_arr), None);
+			let target = rt_arr[0].take();
 
 			context.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -185,7 +202,88 @@ impl SwapChain {
 			};
 			context.RSSetScissorRects(Some(&[scissor_rect]));
 
-			Ok(SwapChain {  })
+			let rasterizer_desc = D3D11_RASTERIZER_DESC {
+				FillMode: D3D11_FILL_SOLID,
+				CullMode: D3D11_CULL_BACK,
+				FrontCounterClockwise: false.into(),
+				DepthBias: 0,
+				SlopeScaledDepthBias: 0.0,
+				DepthBiasClamp: 0.0,
+				DepthClipEnable: true.into(),
+				ScissorEnable: true.into(),
+				MultisampleEnable: false.into(),
+				AntialiasedLineEnable: false.into()
+			};
+			let mut rasterizer_state: Option<ID3D11RasterizerState> = None;
+			device.CreateRasterizerState(&rasterizer_desc, Some(&mut rasterizer_state))
+				.map_err(|_| "Failed to create rasterizer state")?;
+			context.RSSetState(rasterizer_state.as_ref().ok_or("Rasterizer state was not created")?);
+
+			let sampler_desc = D3D11_SAMPLER_DESC {
+				Filter: D3D11_FILTER_MIN_MAG_MIP_LINEAR,
+				AddressU: D3D11_TEXTURE_ADDRESS_CLAMP,
+				AddressV: D3D11_TEXTURE_ADDRESS_CLAMP,
+				AddressW: D3D11_TEXTURE_ADDRESS_CLAMP,
+				MipLODBias: Default::default(),
+				MaxAnisotropy: Default::default(),
+				ComparisonFunc: Default::default(),
+				BorderColor: Default::default(),
+				MinLOD: Default::default(),
+				MaxLOD: Default::default(),
+			};
+			let mut sampler_state: Option<ID3D11SamplerState> = None;
+			device.CreateSamplerState(&sampler_desc, Some(&mut sampler_state))
+				.map_err(|_| "Failed to create sampler state")?;
+			let mut ss_arr = [sampler_state];
+			context.PSSetSamplers(0, Some(&ss_arr));
+			let sampler_state = ss_arr[0].take();
+
+			let bsd = D3D11_BLEND_DESC {
+				RenderTarget: [
+					D3D11_RENDER_TARGET_BLEND_DESC {
+						BlendEnable: true.into(),
+						RenderTargetWriteMask: D3D11_COLOR_WRITE_ENABLE_ALL.0 as u8,
+						SrcBlend: D3D11_BLEND_SRC_ALPHA,
+						DestBlend: D3D11_BLEND_INV_SRC_ALPHA,
+						SrcBlendAlpha: D3D11_BLEND_INV_DEST_ALPHA,
+						DestBlendAlpha: D3D11_BLEND_ONE,
+						BlendOp: D3D11_BLEND_OP_ADD,
+						BlendOpAlpha: D3D11_BLEND_OP_ADD
+					},
+					Default::default(),
+					Default::default(),
+					Default::default(),
+					Default::default(),
+					Default::default(),
+					Default::default(),
+					Default::default(),
+				],
+				AlphaToCoverageEnable: Default::default(),
+				IndependentBlendEnable: Default::default(),
+			};
+			let mut blend_state: Option<ID3D11BlendState> = None;
+			device.CreateBlendState(&bsd, Some(&mut blend_state))
+				.map_err(|_| "Failed to create blend state")?;
+
+			let blend_factor: [c_float; 4] = [0.0, 0.0, 0.0, 0.0];
+			context.OMSetBlendState(
+				blend_state.as_ref().ok_or("Blend state was not created")?,
+				Some(&blend_factor),
+				0xffffffff
+			);
+
+			Ok(SwapChain {
+				target: target.ok_or("Target was not created")?,
+				vertex_buffer: vertex_buffer.ok_or("Vertex buffer was not created")?,
+				colour_shift_buffer: colour_shift_buffer.ok_or("Colour shift buffer was not created")?,
+				matrix_buffer: matrix_buffer.ok_or("Matrix buffer was not created")?,
+				pixel_shader: pixel_shader.ok_or("Pixel shader was not created")?,
+				vertex_shader: vertex_shader.ok_or("Vertex shader was not created")?,
+				input_layout: input_layout.ok_or("Input layout was not created")?,
+				blend_state: blend_state.ok_or("Blend state was not created")?,
+				rasterizer_state: rasterizer_state.ok_or("Rasterizer state was not created")?,
+				sampler_state: sampler_state.ok_or("Sampler state was not created")?,
+			})
 		}
 	}
 }

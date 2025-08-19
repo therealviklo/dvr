@@ -1,10 +1,14 @@
-use windows::{core::{Interface, GUID, PCSTR}, Win32::{Foundation::{HMODULE, HWND, RECT}, Graphics::{Direct3D::{D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, D3D11_SRV_DIMENSION_TEXTURE2D, D3D_DRIVER_TYPE_HARDWARE}, Direct3D11::{D3D11CreateDeviceAndSwapChain, ID3D11BlendState, ID3D11Buffer, ID3D11Device, ID3D11DeviceContext, ID3D11InputLayout, ID3D11PixelShader, ID3D11RasterizerState, ID3D11RenderTargetView, ID3D11Resource, ID3D11SamplerState, ID3D11ShaderResourceView, ID3D11Texture2D, ID3D11VertexShader, D3D11_BIND_CONSTANT_BUFFER, D3D11_BIND_SHADER_RESOURCE, D3D11_BIND_VERTEX_BUFFER, D3D11_BLEND_DESC, D3D11_BLEND_INV_DEST_ALPHA, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_ONE, D3D11_BLEND_OP_ADD, D3D11_BLEND_SRC_ALPHA, D3D11_BUFFER_DESC, D3D11_COLOR_WRITE_ENABLE_ALL, D3D11_CPU_ACCESS_WRITE, D3D11_CREATE_DEVICE_FLAG, D3D11_CULL_BACK, D3D11_FILL_SOLID, D3D11_FILTER_MIN_MAG_MIP_LINEAR, D3D11_INPUT_ELEMENT_DESC, D3D11_INPUT_PER_VERTEX_DATA, D3D11_RASTERIZER_DESC, D3D11_RENDER_TARGET_BLEND_DESC, D3D11_SAMPLER_DESC, D3D11_SDK_VERSION, D3D11_SHADER_RESOURCE_VIEW_DESC, D3D11_SUBRESOURCE_DATA, D3D11_TEXTURE2D_DESC, D3D11_TEXTURE_ADDRESS_CLAMP, D3D11_USAGE_DEFAULT, D3D11_USAGE_DYNAMIC, D3D11_VIEWPORT}, Dxgi::{Common::{DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_R32G32_FLOAT, DXGI_MODE_DESC, DXGI_MODE_SCALING_UNSPECIFIED, DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED, DXGI_RATIONAL, DXGI_SAMPLE_DESC}, IDXGIAdapter, IDXGIDevice, IDXGIFactory, IDXGISwapChain, DXGI_MWA_NO_ALT_ENTER, DXGI_MWA_NO_PRINT_SCREEN, DXGI_MWA_NO_WINDOW_CHANGES, DXGI_SWAP_CHAIN_DESC, DXGI_SWAP_EFFECT_DISCARD, DXGI_USAGE_RENDER_TARGET_OUTPUT}, Imaging::{CLSID_WICImagingFactory, GUID_WICPixelFormat32bppBGRA, IWICBitmapDecoder, IWICBitmapFrameDecode, IWICComponentInfo, IWICFormatConverter, IWICImagingFactory, IWICPixelFormatInfo, WICBitmapDitherTypeNone, WICBitmapPaletteTypeCustom}}, System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER}, UI::WindowsAndMessaging::GetClientRect}};
+use windows::{core::{Interface, PCSTR}, Win32::{Foundation::{GENERIC_READ, HMODULE, HWND, RECT}, Graphics::{Direct3D::{D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, D3D11_SRV_DIMENSION_TEXTURE2D, D3D_DRIVER_TYPE_HARDWARE}, Direct3D11::{D3D11CreateDeviceAndSwapChain, ID3D11BlendState, ID3D11Buffer, ID3D11Device, ID3D11DeviceContext, ID3D11InputLayout, ID3D11PixelShader, ID3D11RasterizerState, ID3D11RenderTargetView, ID3D11Resource, ID3D11SamplerState, ID3D11ShaderResourceView, ID3D11Texture2D, ID3D11VertexShader, D3D11_BIND_CONSTANT_BUFFER, D3D11_BIND_SHADER_RESOURCE, D3D11_BIND_VERTEX_BUFFER, D3D11_BLEND_DESC, D3D11_BLEND_INV_DEST_ALPHA, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_ONE, D3D11_BLEND_OP_ADD, D3D11_BLEND_SRC_ALPHA, D3D11_BUFFER_DESC, D3D11_COLOR_WRITE_ENABLE_ALL, D3D11_CPU_ACCESS_WRITE, D3D11_CREATE_DEVICE_FLAG, D3D11_CULL_BACK, D3D11_FILL_SOLID, D3D11_FILTER_MIN_MAG_MIP_LINEAR, D3D11_INPUT_ELEMENT_DESC, D3D11_INPUT_PER_VERTEX_DATA, D3D11_RASTERIZER_DESC, D3D11_RENDER_TARGET_BLEND_DESC, D3D11_SAMPLER_DESC, D3D11_SDK_VERSION, D3D11_SHADER_RESOURCE_VIEW_DESC, D3D11_SUBRESOURCE_DATA, D3D11_TEXTURE2D_DESC, D3D11_TEXTURE_ADDRESS_CLAMP, D3D11_USAGE_DEFAULT, D3D11_USAGE_DYNAMIC, D3D11_VIEWPORT}, Dxgi::{Common::{DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_R32G32_FLOAT, DXGI_MODE_DESC, DXGI_MODE_SCALING_UNSPECIFIED, DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED, DXGI_RATIONAL, DXGI_SAMPLE_DESC}, IDXGIAdapter, IDXGIDevice, IDXGIFactory, IDXGISwapChain, DXGI_MWA_NO_ALT_ENTER, DXGI_MWA_NO_PRINT_SCREEN, DXGI_MWA_NO_WINDOW_CHANGES, DXGI_SWAP_CHAIN_DESC, DXGI_SWAP_EFFECT_DISCARD, DXGI_USAGE_RENDER_TARGET_OUTPUT}, Imaging::{CLSID_WICImagingFactory, GUID_WICPixelFormat32bppBGRA, IWICBitmapDecoder, IWICImagingFactory, IWICPixelFormatInfo, WICBitmapDitherTypeNone, WICBitmapPaletteTypeCustom, WICDecodeMetadataCacheOnDemand}}, System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER}, UI::{Shell::SHCreateMemStream, WindowsAndMessaging::GetClientRect}}};
 use std::{ffi::{c_float, CString}, ptr::{null, null_mut}};
+use windows_strings::*;
 use crate::{win_utils::*, DvrCtx};
 
 mod shader_data;
 
 pub struct Dvr {
+	swap: IDXGISwapChain,
+	device: ID3D11Device,
+	context: ID3D11DeviceContext,
 	swapchain: Option<SwapChain>,
 	wic_factory: IWICImagingFactory,
 }
@@ -36,7 +40,7 @@ impl Dvr {
 				Flags: 0,
 			};
 
-			let mut swapchain: Option<IDXGISwapChain> = None;
+			let mut swap: Option<IDXGISwapChain> = None;
 			let mut device: Option<ID3D11Device> = None;
 			let mut context: Option<ID3D11DeviceContext> = None;
 
@@ -48,15 +52,19 @@ impl Dvr {
 				None,
 				D3D11_SDK_VERSION,
 				Some(&sd),
-				Some(&mut swapchain),
+				Some(&mut swap),
 				Some(&mut device),
 				None,
 				Some(&mut context)
 			).map_err(|_| "Failed to initialise Direct3D 11")?;
 
+			let swap = swap.ok_or("Swapchain was not created")?;
+			let device = device.ok_or("DirectX device was not created")?;
+			let context = context.ok_or("DirectX device contect was not created")?;
+
 			{
 				let dxgi_device: IDXGIDevice =
-					device.as_mut().ok_or("Device was not created")?.cast()
+					device.cast()
 					.map_err(|_| "Failed to get DXGI device")?;
 				
 				let dxgi_adapter: IDXGIAdapter =
@@ -72,9 +80,9 @@ impl Dvr {
 			}
 
 			let swapchain = SwapChain::new(
-				&swapchain.ok_or("Swapchain was not created")?,
-				&device.ok_or("DirectX device was not created")?,
-				&context.ok_or("DirectX device contect was not created")?,
+				&swap,
+				&device,
+				&context,
 				ctx,
 				500.0,
 				250.0
@@ -87,15 +95,39 @@ impl Dvr {
 			).map_err(|_| "Failed to create WIC factory")?;
 
 			Ok(Dvr {
+				swap: swap,
+				device: device,
+				context: context,
 				swapchain: Some(swapchain),
 				wic_factory,
 			})
 		}
 	}
 
-	// pub async fn load_texture(&self, url: &str) -> Result<Texture, String> {
+	pub async fn load_texture(&self, filename: &str) -> Result<Texture, String> {
+		unsafe {
+			let decoder = self.wic_factory.CreateDecoderFromFilename(
+				&HSTRING::from(filename),
+				None,
+				GENERIC_READ,
+				WICDecodeMetadataCacheOnDemand
+			).map_err(|_| "Failed to create decoder for image file")?;
+			Texture::new(decoder, &self.device, &self.wic_factory)
+		}
+	}
 
-	// }
+	pub async fn load_texture_raw(&self, data: &[u8]) -> Result<Texture, String> {
+		unsafe {
+			let stream = SHCreateMemStream(Some(data))
+				.ok_or("Failed to create IStream")?;
+			let decoder = self.wic_factory.CreateDecoderFromStream(
+				&stream,
+				null(),
+				WICDecodeMetadataCacheOnDemand
+			).map_err(|_| "Failed to create decoder for image")?;
+			Texture::new(decoder, &self.device, &self.wic_factory)
+		}
+	}
 }
 
 struct SwapChain {
@@ -377,7 +409,7 @@ pub struct Texture {
 }
 
 impl Texture {
-	fn create_texture_with_decoder(decoder: IWICBitmapDecoder, device: &ID3D11Device, wic_factory: &IWICImagingFactory) -> Result<Texture, String> {
+	fn new(decoder: IWICBitmapDecoder, device: &ID3D11Device, wic_factory: &IWICImagingFactory) -> Result<Texture, String> {
 		unsafe {
 			let frame = decoder.GetFrame(0)
 				.map_err(|_| "Failed to get image frame")?;

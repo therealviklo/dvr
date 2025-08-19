@@ -27,7 +27,11 @@ features = [
 	"Win32_UI_WindowsAndMessaging",
 	"Win32_System_Com",
 	"Win32_Graphics_Imaging",
+	"Win32_UI_Shell",
 ]
+
+[dependencies.windows-strings]
+version = "0.4"
 
 [dependencies.web-sys]
 version = "0.3.77"

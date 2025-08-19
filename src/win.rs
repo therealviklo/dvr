@@ -6,6 +6,7 @@ use crate::{win_utils::*, DvrCtx};
 mod shader_data;
 
 pub struct Dvr {
+	com_init: ComInit,
 	swap: IDXGISwapChain,
 	device: ID3D11Device,
 	context: ID3D11DeviceContext,
@@ -15,6 +16,7 @@ pub struct Dvr {
 
 impl Dvr {
     pub fn new(ctx: DvrCtx) -> Result<Dvr, String> {
+		let com_init = ComInit::init()?;
 		unsafe {
 			let sd = DXGI_SWAP_CHAIN_DESC {
 				BufferDesc: DXGI_MODE_DESC {
@@ -95,6 +97,7 @@ impl Dvr {
 			).map_err(|_| "Failed to create WIC factory")?;
 
 			Ok(Dvr {
+				com_init,
 				swap: swap,
 				device: device,
 				context: context,

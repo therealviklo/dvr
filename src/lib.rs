@@ -17,7 +17,7 @@ mod win_utils;
 // pub mod input;
 
 #[cfg(target_arch = "wasm32")]
-type DvrCtx = WebGl2RenderingContext;
+type DvrCtx = web_sys::WebGl2RenderingContext;
 #[cfg(target_os = "windows")]
 type DvrCtx = windows::Win32::Foundation::HWND;
 

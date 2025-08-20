@@ -27,6 +27,3 @@ type DvrCtx = windows::Win32::Foundation::HWND;
 mod test_wasm;
 #[cfg(target_arch = "wasm32")]
 pub use crate::test_wasm::start;
-
-#[cfg(target_os = "windows")]
-mod test_win;

@@ -1,2 +1,2 @@
 #!/usr/bin/bash
-cargo run --target x86_64-pc-windows-gnu --bin test-win
+cargo run --target x86_64-pc-windows-gnu --bin test_win

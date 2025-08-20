@@ -1,6 +1,8 @@
 use uuid::Uuid;
-use windows::Win32::{Foundation::{HWND, RECT}, System::LibraryLoader::GetModuleHandleW, UI::WindowsAndMessaging::{AdjustWindowRect, CreateWindowExW, LoadCursorW, RegisterClassExW, ShowWindow, UnregisterClassW, CS_OWNDC, CW_USEDEFAULT, IDC_ARROW, SW_SHOW, WINDOW_EX_STYLE, WINDOW_STYLE, WNDCLASSEXW, WS_CAPTION, WS_MAXIMIZEBOX, WS_MINIMIZEBOX, WS_SYSMENU, WS_THICKFRAME}};
+use windows::Win32::{Foundation::{HWND, LPARAM, LRESULT, RECT, WPARAM}, System::LibraryLoader::GetModuleHandleW, UI::WindowsAndMessaging::{AdjustWindowRect, CreateWindowExW, DefWindowProcW, DispatchMessageW, GetMessageW, LoadCursorW, PeekMessageW, RegisterClassExW, ShowWindow, TranslateMessage, UnregisterClassW, CS_OWNDC, CW_USEDEFAULT, IDC_ARROW, MSG, PM_REMOVE, SW_SHOW, WINDOW_EX_STYLE, WINDOW_STYLE, WNDCLASSEXW, WS_CAPTION, WS_MAXIMIZEBOX, WS_MINIMIZEBOX, WS_SYSMENU, WS_THICKFRAME}};
 use windows_strings::{HSTRING, PCWSTR};
+
+use crate::DvrCtx;
 
 pub struct Window {
 	_wnd_class: WndClass,
@@ -37,12 +39,38 @@ impl Window {
 				_wnd_class: wnd_class,
 				hwnd,
 			};
-			if ShowWindow(hwnd, SW_SHOW).0 != 0 {
-				return Err("Failed to show window".to_string())
-			}
+			let _ = ShowWindow(hwnd, SW_SHOW);
 			Ok(window)
 		}
 	}
+
+	pub fn update(&self) {
+		unsafe {
+			let mut msg: MSG = Default::default();
+			while PeekMessageW(&mut msg, Some(self.hwnd), 0, 0, PM_REMOVE).0 != 0 {
+				let _ = TranslateMessage(&mut msg);
+				DispatchMessageW(&mut msg);
+			}
+		}
+	}
+
+	pub fn update_blocking(&self) {
+		unsafe {
+			let mut msg: MSG = Default::default();
+			if GetMessageW(&mut msg, Some(self.hwnd), 0, 0).0 != 0 {
+				let _ = TranslateMessage(&mut msg);
+				DispatchMessageW(&mut msg);
+			}
+		}
+	}
+
+	pub fn get_ctx(&self) -> DvrCtx {
+		self.hwnd
+	}
+}
+
+unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
+	DefWindowProcW(hwnd, msg, wparam, lparam)
 }
 
 struct WndClass {
@@ -56,7 +84,7 @@ impl WndClass {
 			let wnd_class = WNDCLASSEXW {
 				cbSize: size_of::<WNDCLASSEXW>() as u32,
 				style: CS_OWNDC,
-				// lpfnWndProc: ,
+				lpfnWndProc: Some(wndproc),
 				hInstance: GetModuleHandleW(None)
 					.map_err(|_| "Failed to get module")?.into(),
 				hCursor: LoadCursorW(None, IDC_ARROW)
@@ -64,7 +92,7 @@ impl WndClass {
 				lpszClassName: PCWSTR(wnd_class_name.as_ptr()),
 				..Default::default()
 			};
-			if RegisterClassExW(&wnd_class) != 0 {
+			if RegisterClassExW(&wnd_class) == 0 {
 				return Err("Failed to register window class".to_string())
 			}
 			Ok(WndClass {

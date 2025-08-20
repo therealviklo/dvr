@@ -1,4 +1,4 @@
-use windows::{core::{Interface, PCSTR}, Win32::{Foundation::{GENERIC_READ, HMODULE, HWND, RECT}, Graphics::{Direct3D::{D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, D3D11_SRV_DIMENSION_TEXTURE2D, D3D_DRIVER_TYPE_HARDWARE}, Direct3D11::{D3D11CreateDeviceAndSwapChain, ID3D11BlendState, ID3D11Buffer, ID3D11Device, ID3D11DeviceContext, ID3D11InputLayout, ID3D11PixelShader, ID3D11RasterizerState, ID3D11RenderTargetView, ID3D11Resource, ID3D11SamplerState, ID3D11ShaderResourceView, ID3D11Texture2D, ID3D11VertexShader, D3D11_BIND_CONSTANT_BUFFER, D3D11_BIND_SHADER_RESOURCE, D3D11_BIND_VERTEX_BUFFER, D3D11_BLEND_DESC, D3D11_BLEND_INV_DEST_ALPHA, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_ONE, D3D11_BLEND_OP_ADD, D3D11_BLEND_SRC_ALPHA, D3D11_BUFFER_DESC, D3D11_COLOR_WRITE_ENABLE_ALL, D3D11_CPU_ACCESS_WRITE, D3D11_CREATE_DEVICE_FLAG, D3D11_CULL_BACK, D3D11_FILL_SOLID, D3D11_FILTER_MIN_MAG_MIP_LINEAR, D3D11_INPUT_ELEMENT_DESC, D3D11_INPUT_PER_VERTEX_DATA, D3D11_MAP_WRITE_DISCARD, D3D11_RASTERIZER_DESC, D3D11_RENDER_TARGET_BLEND_DESC, D3D11_SAMPLER_DESC, D3D11_SDK_VERSION, D3D11_SHADER_RESOURCE_VIEW_DESC, D3D11_SUBRESOURCE_DATA, D3D11_TEXTURE2D_DESC, D3D11_TEXTURE_ADDRESS_CLAMP, D3D11_USAGE_DEFAULT, D3D11_USAGE_DYNAMIC, D3D11_VIEWPORT}, Dxgi::{Common::{DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_R32G32_FLOAT, DXGI_MODE_DESC, DXGI_MODE_SCALING_UNSPECIFIED, DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED, DXGI_RATIONAL, DXGI_SAMPLE_DESC}, IDXGIAdapter, IDXGIDevice, IDXGIFactory, IDXGISwapChain, DXGI_MWA_NO_ALT_ENTER, DXGI_MWA_NO_PRINT_SCREEN, DXGI_MWA_NO_WINDOW_CHANGES, DXGI_PRESENT, DXGI_SWAP_CHAIN_DESC, DXGI_SWAP_EFFECT_DISCARD, DXGI_USAGE_RENDER_TARGET_OUTPUT}, Imaging::{CLSID_WICImagingFactory, GUID_WICPixelFormat32bppBGRA, IWICBitmapDecoder, IWICImagingFactory, IWICPixelFormatInfo, WICBitmapDitherTypeNone, WICBitmapPaletteTypeCustom, WICDecodeMetadataCacheOnDemand}}, System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER}, UI::{Shell::SHCreateMemStream, WindowsAndMessaging::GetClientRect}}};
+use windows::{core::{Interface, PCSTR}, Win32::{Foundation::{GENERIC_READ, HMODULE, HWND, RECT}, Graphics::{Direct3D::{D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, D3D11_SRV_DIMENSION_TEXTURE2D, D3D_DRIVER_TYPE_HARDWARE}, Direct3D11::{D3D11CreateDeviceAndSwapChain, ID3D11BlendState, ID3D11Buffer, ID3D11Device, ID3D11DeviceContext, ID3D11InputLayout, ID3D11PixelShader, ID3D11RasterizerState, ID3D11RenderTargetView, ID3D11Resource, ID3D11SamplerState, ID3D11ShaderResourceView, ID3D11Texture2D, ID3D11VertexShader, D3D11_BIND_CONSTANT_BUFFER, D3D11_BIND_SHADER_RESOURCE, D3D11_BIND_VERTEX_BUFFER, D3D11_BLEND_DESC, D3D11_BLEND_INV_DEST_ALPHA, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_ONE, D3D11_BLEND_OP_ADD, D3D11_BLEND_SRC_ALPHA, D3D11_BUFFER_DESC, D3D11_COLOR_WRITE_ENABLE_ALL, D3D11_CPU_ACCESS_WRITE, D3D11_CREATE_DEVICE_FLAG, D3D11_CULL_BACK, D3D11_FILL_SOLID, D3D11_FILTER_MIN_MAG_MIP_LINEAR, D3D11_INPUT_ELEMENT_DESC, D3D11_INPUT_PER_VERTEX_DATA, D3D11_MAP_WRITE_DISCARD, D3D11_RASTERIZER_DESC, D3D11_RENDER_TARGET_BLEND_DESC, D3D11_SAMPLER_DESC, D3D11_SDK_VERSION, D3D11_SHADER_RESOURCE_VIEW_DESC, D3D11_SHADER_RESOURCE_VIEW_DESC_0, D3D11_SUBRESOURCE_DATA, D3D11_TEX2D_SRV, D3D11_TEXTURE2D_DESC, D3D11_TEXTURE_ADDRESS_CLAMP, D3D11_USAGE_DEFAULT, D3D11_USAGE_DYNAMIC, D3D11_VIEWPORT}, Dxgi::{Common::{DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_R32G32_FLOAT, DXGI_MODE_DESC, DXGI_MODE_SCALING_UNSPECIFIED, DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED, DXGI_RATIONAL, DXGI_SAMPLE_DESC}, IDXGIAdapter, IDXGIDevice, IDXGIFactory, IDXGISwapChain, DXGI_MWA_NO_ALT_ENTER, DXGI_MWA_NO_PRINT_SCREEN, DXGI_MWA_NO_WINDOW_CHANGES, DXGI_PRESENT, DXGI_SWAP_CHAIN_DESC, DXGI_SWAP_EFFECT_DISCARD, DXGI_USAGE_RENDER_TARGET_OUTPUT}, Imaging::{CLSID_WICImagingFactory, GUID_WICPixelFormat32bppBGRA, IWICBitmapDecoder, IWICImagingFactory, IWICPixelFormatInfo, WICBitmapDitherTypeNone, WICBitmapPaletteTypeCustom, WICDecodeMetadataCacheOnDemand}}, System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER}, UI::{Shell::SHCreateMemStream, WindowsAndMessaging::GetClientRect}}};
 use std::{ffi::{c_float, CString}, ptr::{null, null_mut}};
 use windows_strings::*;
 use directx_math::*;
@@ -226,7 +226,7 @@ impl Dvr {
 		Ok(())
 	}
 
-	pub async fn load_texture(&self, filename: &str) -> Result<Texture, String> {
+	pub /* async */ fn load_texture(&self, filename: &str) -> Result<Texture, String> {
 		unsafe {
 			let decoder = self.wic_factory.CreateDecoderFromFilename(
 				&HSTRING::from(filename),
@@ -238,7 +238,7 @@ impl Dvr {
 		}
 	}
 
-	pub async fn load_texture_raw(&self, data: &[u8]) -> Result<Texture, String> {
+	pub /* async */ fn load_texture_raw(&self, data: &[u8]) -> Result<Texture, String> {
 		unsafe {
 			let stream = SHCreateMemStream(Some(data))
 				.ok_or("Failed to create IStream")?;
@@ -641,11 +641,19 @@ impl Texture {
 			let srv_desc = D3D11_SHADER_RESOURCE_VIEW_DESC {
 				Format: DXGI_FORMAT_B8G8R8A8_UNORM,
 				ViewDimension: D3D11_SRV_DIMENSION_TEXTURE2D,
-				Anonymous: Default::default(),
+				Anonymous: D3D11_SHADER_RESOURCE_VIEW_DESC_0 {
+					Texture2D: D3D11_TEX2D_SRV {
+						MostDetailedMip: 0,
+						MipLevels: 1,
+					}
+				}
 			};
 			let mut tex_view = None;
-			device.CreateShaderResourceView(tex.as_ref().unwrap(), Some(&srv_desc), Some(&mut tex_view))
-				.map_err(|_| "Failed to create texture view")?;
+			device.CreateShaderResourceView(
+				tex.as_ref().ok_or("Texture was not created")?,
+				Some(&srv_desc),
+				Some(&mut tex_view)
+			).map_err(|e| format!("Failed to create texture view {} {}", e.code(), e.message()))?; // TODO: clean up
 
 			Ok(Texture {
 				tex: tex.ok_or("Texture was not created")?,

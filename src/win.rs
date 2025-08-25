@@ -7,12 +7,13 @@ use crate::{win_utils::*, DvrCtx};
 mod shader_data;
 
 pub struct Dvr {
-	com_init: ComInit,
+	_com_init: ComInit,
 	swap: IDXGISwapChain,
 	device: ID3D11Device,
 	context: ID3D11DeviceContext,
 	swapchain: Option<SwapChain>,
 	wic_factory: IWICImagingFactory,
+	hwnd: HWND,
 }
 
 impl Dvr {
@@ -98,12 +99,13 @@ impl Dvr {
 			).map_err(|_| "Failed to create WIC factory")?;
 
 			Ok(Dvr {
-				com_init,
+				_com_init: com_init,
 				swap: swap,
 				device: device,
 				context: context,
 				swapchain: Some(swapchain),
 				wic_factory,
+				hwnd: ctx,
 			})
 		}
 	}
@@ -113,6 +115,7 @@ impl Dvr {
 	}
 
 	pub fn end_draw(&self) -> Result<(), String> {
+		println!("Kakd");
 		unsafe {
 			self.swap.Present(0, DXGI_PRESENT(0))
 				.ok().map_err(|_| "Failed to present")?;
@@ -147,7 +150,7 @@ impl Dvr {
 		};
 		unsafe {
 			// TODO: does the clone work?
-			self.context.PSSetShaderResources(0, Some(&[Some(texture.tex_view.clone())]));
+			self.context.PSSetShaderResources(0, Some(&texture.tex_view_arr));
 
 			let swapchain = self.get_swapchain()?;
 
@@ -346,16 +349,16 @@ impl SwapChain {
 			}
 			let mtcs = Mtcs {
 				mtx: [
-					[0.0, 1.0, 0.0, 0.0],
 					[1.0, 0.0, 0.0, 0.0],
+					[0.0, 1.0, 0.0, 0.0],
 					[0.0, 0.0, 1.0, 0.0],
-					[0.0, 0.0, 0.0, 1.0]
+					[0.0, 0.0, 0.0, 1.0],
 				],
 				tex_mtx: [
 					[1.0, 0.0, 0.0, 0.0],
 					[0.0, 1.0, 0.0, 0.0],
 					[0.0, 0.0, 1.0, 0.0],
-					[0.0, 0.0, 0.0, 1.0]
+					[0.0, 0.0, 0.0, 1.0],
 				],
 			};
 			let mbd = D3D11_BUFFER_DESC {
@@ -532,7 +535,8 @@ impl SwapChain {
 
 pub struct Texture {
 	tex: ID3D11Texture2D,
-	tex_view: ID3D11ShaderResourceView,
+	// This is in an array due to the call to PSSetShaderResources() in draw()
+	tex_view_arr: [Option<ID3D11ShaderResourceView>; 1],
 	size: (u32, u32),
 }
 
@@ -657,7 +661,7 @@ impl Texture {
 
 			Ok(Texture {
 				tex: tex.ok_or("Texture was not created")?,
-				tex_view: tex_view.ok_or("Texture view was not created")?,
+				tex_view_arr: [Some(tex_view.ok_or("Texture view was not created")?)],
 				size: (width, height),
 			})
 		}

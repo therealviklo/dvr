@@ -13,7 +13,12 @@ impl Window {
 	pub fn new(title: &str, width: i32, height: i32, resizeable: bool) -> Result<Window, String> {
 		unsafe {
 			let wnd_class = WndClass::new()?;
-			let mut r: RECT = Default::default();
+			let mut r = RECT {
+				left: 0,
+				top: 0,
+				right: width,
+				bottom: height,
+			};
 			let style = WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX | if resizeable { WS_THICKFRAME | WS_MAXIMIZEBOX } else { WINDOW_STYLE(0) };
 			AdjustWindowRect(
 				&mut r,

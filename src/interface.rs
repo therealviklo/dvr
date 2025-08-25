@@ -1,4 +1,4 @@
 #[cfg(target_os = "windows")]
-mod win_window;
+mod win_interface;
 #[cfg(target_os = "windows")]
-pub use win_window::*;
+pub use win_interface::*;

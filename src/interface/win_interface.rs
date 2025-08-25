@@ -4,13 +4,13 @@ use windows_strings::{HSTRING, PCWSTR};
 
 use crate::DvrCtx;
 
-pub struct Window {
+pub struct Interface {
 	_wnd_class: WndClass,
 	hwnd: HWND,
 }
 
-impl Window {
-	pub fn new(title: &str, width: i32, height: i32, resizeable: bool) -> Result<Window, String> {
+impl Interface {
+	pub fn new(title: &str, width: i32, height: i32, resizeable: bool) -> Result<Interface, String> {
 		unsafe {
 			let wnd_class = WndClass::new()?;
 			let mut r = RECT {
@@ -40,7 +40,7 @@ impl Window {
 					.map_err(|_| "Failed to get module")?.into()),
 				None // TODO: how to deal with this?
 			).map_err(|_| "Failed to create window")?;
-			let window = Window {
+			let window = Interface {
 				_wnd_class: wnd_class,
 				hwnd,
 			};

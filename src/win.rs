@@ -115,7 +115,6 @@ impl Dvr {
 	}
 
 	pub fn end_draw(&self) -> Result<(), String> {
-		println!("Kakd");
 		unsafe {
 			self.swap.Present(0, DXGI_PRESENT(0))
 				.ok().map_err(|_| "Failed to present")?;
@@ -149,7 +148,6 @@ impl Dvr {
 			None => ((0.0, 0.0), (texture.get_width() as f32, texture.get_height() as f32)),
 		};
 		unsafe {
-			// TODO: does the clone work?
 			self.context.PSSetShaderResources(0, Some(&texture.tex_view_arr));
 
 			let swapchain = self.get_swapchain()?;
@@ -385,6 +383,10 @@ impl SwapChain {
 				None, 
 				Some(&mut pixel_shader)
 			).map_err(|_| "Failed to create pixel shader")?;
+			context.PSSetShader(
+				pixel_shader.as_ref().ok_or("Pixel shader was not created")?,
+				None
+			);
 
 			let mut vertex_shader: Option<ID3D11VertexShader> = None;
 			device.CreateVertexShader(
@@ -392,6 +394,10 @@ impl SwapChain {
 				None, 
 				Some(&mut vertex_shader)
 			).map_err(|_| "Failed to create vertex shader")?;
+			context.VSSetShader(
+				vertex_shader.as_ref().ok_or("Vertex shader was not created")?,
+				None
+			);
 
 			let position_cstr = CString::new("Position").map_err(|_| "Failed to create C string")?;
 			let texcoord_cstr = CString::new("TexCoord").map_err(|_| "Failed to create C string")?;

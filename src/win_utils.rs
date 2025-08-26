@@ -1,4 +1,4 @@
-use windows::Win32::System::Com::{CoInitializeEx, CoUninitialize, COINIT_APARTMENTTHREADED, COINIT_DISABLE_OLE1DDE};
+use windows::{core::Error, Win32::System::Com::{CoInitializeEx, CoUninitialize, COINIT_APARTMENTTHREADED, COINIT_DISABLE_OLE1DDE}};
 
 pub struct ComInit {}
 
@@ -17,5 +17,12 @@ impl Drop for ComInit {
 		unsafe {
 			CoUninitialize();
 		}
+	}
+}
+
+pub fn winerr_map(msg: &str) -> impl Fn(Error) -> String {
+	let msg = msg.to_string();
+	move |err: Error| -> String {
+		format!("{msg} ({}: {})", err.code(), err.message())
 	}
 }

@@ -60,7 +60,7 @@ impl Dvr {
 				Some(&mut device),
 				None,
 				Some(&mut context)
-			).map_err(|_| "Failed to initialise Direct3D 11")?;
+			).map_err(winerr_map("Failed to initialise Direct3D 11"))?;
 
 			let swap = swap.ok_or("Swapchain was not created")?;
 			let device = device.ok_or("DirectX device was not created")?;
@@ -69,18 +69,18 @@ impl Dvr {
 			{
 				let dxgi_device: IDXGIDevice =
 					device.cast()
-					.map_err(|_| "Failed to get DXGI device")?;
+					.map_err(winerr_map("Failed to get DXGI device"))?;
 				
 				let dxgi_adapter: IDXGIAdapter =
 					dxgi_device.GetParent()
-					.map_err(|_| "Failed to get DXGI adapter")?;
+					.map_err(winerr_map("Failed to get DXGI adapter"))?;
 
 				let dxgi_factory: IDXGIFactory =
 					dxgi_adapter.GetParent()
-					.map_err(|_| "Failed to get DXGI factory")?;
+					.map_err(winerr_map("Failed to get DXGI factory"))?;
 
 				dxgi_factory.MakeWindowAssociation(ctx, DXGI_MWA_NO_ALT_ENTER | DXGI_MWA_NO_PRINT_SCREEN | DXGI_MWA_NO_WINDOW_CHANGES)
-					.map_err(|_| "Failed to make window associations")?;
+					.map_err(winerr_map("Failed to make window associations"))?;
 			}
 
 			let swapchain = SwapChain::new(
@@ -96,7 +96,7 @@ impl Dvr {
 				&CLSID_WICImagingFactory,
 				None,
 				CLSCTX_INPROC_SERVER
-			).map_err(|_| "Failed to create WIC factory")?;
+			).map_err(winerr_map("Failed to create WIC factory"))?;
 
 			Ok(Dvr {
 				_com_init: com_init,
@@ -117,7 +117,7 @@ impl Dvr {
 	pub fn end_draw(&self) -> Result<(), String> {
 		unsafe {
 			self.swap.Present(0, DXGI_PRESENT(0))
-				.ok().map_err(|_| "Failed to present")?;
+				.ok().map_err(winerr_map("Failed to present"))?;
 		}
 		Ok(())
 	}
@@ -125,7 +125,7 @@ impl Dvr {
 	pub fn end_draw_sync(&self, sync_interval: u32) -> Result<(), String> {
 		unsafe {
 			self.swap.Present(sync_interval, DXGI_PRESENT(0))
-				.ok().map_err(|_| "Failed to present")?;
+				.ok().map_err(winerr_map("Failed to present"))?;
 		}
 		Ok(())
 	}
@@ -159,7 +159,7 @@ impl Dvr {
 				D3D11_MAP_WRITE_DISCARD,
 				0,
 				Some(&mut msr_ps)
-			).map_err(|_| "Failed to map colour shift buffer")?;
+			).map_err(winerr_map("Failed to map colour shift buffer"))?;
 
 			// TODO: Replace with actual colour shift
 			let clr_shift: [c_float; 4] = [1.0, 1.0, 1.0, 1.0];
@@ -213,7 +213,7 @@ impl Dvr {
 				D3D11_MAP_WRITE_DISCARD,
 				0,
 				Some(&mut msr)
-			).map_err(|_| "Failed to map matrix buffer")?;
+			).map_err(winerr_map("Failed to map matrix buffer"))?;
 
 			std::ptr::copy_nonoverlapping(
 				&mtcs as *const Mtcs as *const u8,
@@ -234,7 +234,7 @@ impl Dvr {
 				None,
 				GENERIC_READ,
 				WICDecodeMetadataCacheOnDemand
-			).map_err(|_| "Failed to create decoder for image file")?;
+			).map_err(winerr_map("Failed to create decoder for image file"))?;
 			Texture::new(decoder, &self.device, &self.wic_factory)
 		}
 	}
@@ -247,7 +247,7 @@ impl Dvr {
 				&stream,
 				null(),
 				WICDecodeMetadataCacheOnDemand
-			).map_err(|_| "Failed to create decoder for image")?;
+			).map_err(winerr_map("Failed to create decoder for image"))?;
 			Texture::new(decoder, &self.device, &self.wic_factory)
 		}
 	}
@@ -276,11 +276,11 @@ impl SwapChain {
 	fn new(swap: &IDXGISwapChain, device: &ID3D11Device, context: &ID3D11DeviceContext, hwnd: HWND, desired_width: c_float, desired_height: c_float) -> Result<SwapChain, String> {
 		unsafe {
 			let backbuffer: ID3D11Resource = swap.GetBuffer(0)
-				.map_err(|_| "Failed to get back buffer")?;
+				.map_err(winerr_map("Failed to get back buffer"))?;
 			
 			let mut target: Option<ID3D11RenderTargetView> = None;
 			device.CreateRenderTargetView(&backbuffer, None, Some(&mut target))
-				.map_err(|_| "Failed to create render target view")?;
+				.map_err(winerr_map("Failed to create render target view"))?;
 
 			#[repr(C)]
 			struct Vertex {
@@ -310,7 +310,7 @@ impl SwapChain {
 			};
 			let mut vertex_buffer: Option<ID3D11Buffer> = None;
 			device.CreateBuffer(&bd, Some(&srd), Some(&mut vertex_buffer))
-				.map_err(|_| "Failed to create vertex buffer")?;
+				.map_err(winerr_map("Failed to create vertex buffer"))?;
 			let stride = size_of::<Vertex>() as u32;
 			let offset = 0;
 			context.IASetVertexBuffers(
@@ -335,7 +335,7 @@ impl SwapChain {
 			};
 			let mut colour_shift_buffer: Option<ID3D11Buffer> = None;
 			device.CreateBuffer(&mbd_ps, Some(&msd_ps), Some(&mut colour_shift_buffer))
-				.map_err(|_| "Failed to create colour shift buffer")?;
+				.map_err(winerr_map("Failed to create colour shift buffer"))?;
 			let mut cs_arr = [colour_shift_buffer];
 			context.PSSetConstantBuffers(0, Some(&cs_arr));
 			let colour_shift_buffer = cs_arr[0].take();
@@ -372,7 +372,7 @@ impl SwapChain {
 			};
 			let mut matrix_buffer: Option<ID3D11Buffer> = None;
 			device.CreateBuffer(&mbd, Some(&msd), Some(&mut matrix_buffer))
-				.map_err(|_| "Failed to create matrix buffer")?;
+				.map_err(winerr_map("Failed to create matrix buffer"))?;
 			let mut mb_arr = [matrix_buffer];
 			context.VSSetConstantBuffers(0, Some(&mb_arr));
 			let matrix_buffer = mb_arr[0].take();
@@ -382,7 +382,7 @@ impl SwapChain {
 				&shader_data::PIXEL_SHADER_DATA, 
 				None, 
 				Some(&mut pixel_shader)
-			).map_err(|_| "Failed to create pixel shader")?;
+			).map_err(winerr_map("Failed to create pixel shader"))?;
 			context.PSSetShader(
 				pixel_shader.as_ref().ok_or("Pixel shader was not created")?,
 				None
@@ -393,14 +393,16 @@ impl SwapChain {
 				&shader_data::VERTEX_SHADER_DATA, 
 				None, 
 				Some(&mut vertex_shader)
-			).map_err(|_| "Failed to create vertex shader")?;
+			).map_err(winerr_map("Failed to create vertex shader"))?;
 			context.VSSetShader(
 				vertex_shader.as_ref().ok_or("Vertex shader was not created")?,
 				None
 			);
 
-			let position_cstr = CString::new("Position").map_err(|_| "Failed to create C string")?;
-			let texcoord_cstr = CString::new("TexCoord").map_err(|_| "Failed to create C string")?;
+			let position_cstr = CString::new("Position")
+				.map_err(|_| "Failed to create C string")?;
+			let texcoord_cstr = CString::new("TexCoord")
+				.map_err(|_| "Failed to create C string")?;
 			let ied = [
 				D3D11_INPUT_ELEMENT_DESC {
 					SemanticName: PCSTR(position_cstr.as_ptr() as *const u8),
@@ -423,7 +425,7 @@ impl SwapChain {
 			];
 			let mut input_layout: Option<ID3D11InputLayout> = None;
 			device.CreateInputLayout(&ied, &shader_data::VERTEX_SHADER_DATA, Some(&mut input_layout))
-				.map_err(|_| "Failed to create input layout")?;
+				.map_err(winerr_map("Failed to create input layout"))?;
 			context.IASetInputLayout(input_layout.as_ref().ok_or("Input layout was not created")?);
 
 			let mut rt_arr = [target];
@@ -434,7 +436,7 @@ impl SwapChain {
 
 			let mut wnd_size: RECT = Default::default();
 			GetClientRect(hwnd, &mut wnd_size)
-				.map_err(|_| "Failed to get window size")?;
+				.map_err(winerr_map("Failed to get window size"))?;
 			let width = wnd_size.right;
 			let height = wnd_size.bottom;
 
@@ -471,7 +473,7 @@ impl SwapChain {
 			};
 			let mut rasterizer_state: Option<ID3D11RasterizerState> = None;
 			device.CreateRasterizerState(&rasterizer_desc, Some(&mut rasterizer_state))
-				.map_err(|_| "Failed to create rasterizer state")?;
+				.map_err(winerr_map("Failed to create rasterizer state"))?;
 			context.RSSetState(rasterizer_state.as_ref().ok_or("Rasterizer state was not created")?);
 
 			let sampler_desc = D3D11_SAMPLER_DESC {
@@ -483,7 +485,7 @@ impl SwapChain {
 			};
 			let mut sampler_state: Option<ID3D11SamplerState> = None;
 			device.CreateSamplerState(&sampler_desc, Some(&mut sampler_state))
-				.map_err(|_| "Failed to create sampler state")?;
+				.map_err(winerr_map("Failed to create sampler state"))?;
 			let mut ss_arr = [sampler_state];
 			context.PSSetSamplers(0, Some(&ss_arr));
 			let sampler_state = ss_arr[0].take();
@@ -512,7 +514,7 @@ impl SwapChain {
 			};
 			let mut blend_state: Option<ID3D11BlendState> = None;
 			device.CreateBlendState(&bsd, Some(&mut blend_state))
-				.map_err(|_| "Failed to create blend state")?;
+				.map_err(winerr_map("Failed to create blend state"))?;
 
 			let blend_factor: [c_float; 4] = [0.0, 0.0, 0.0, 0.0];
 			context.OMSetBlendState(
@@ -550,10 +552,10 @@ impl Texture {
 	fn new(decoder: IWICBitmapDecoder, device: &ID3D11Device, wic_factory: &IWICImagingFactory) -> Result<Texture, String> {
 		unsafe {
 			let frame = decoder.GetFrame(0)
-				.map_err(|_| "Failed to get image frame")?;
+				.map_err(winerr_map("Failed to get image frame"))?;
 
 			let pixel_format = frame.GetPixelFormat()
-				.map_err(|_| "Failed to get pixel format")?;
+				.map_err(winerr_map("Failed to get pixel format"))?;
 
 			let mut width = 0u32;
 			let mut height = 0u32;
@@ -566,7 +568,7 @@ impl Texture {
 				// Conversion is needed
 
 				let format_converter = wic_factory.CreateFormatConverter()
-					.map_err(|_| "Failed to create WIC format converter")?;
+					.map_err(winerr_map("Failed to create WIC format converter"))?;
 
 				format_converter.Initialize(
 					&frame,
@@ -575,24 +577,24 @@ impl Texture {
 					None,
 					0.0,
 					WICBitmapPaletteTypeCustom,
-				).map_err(|_| "Failed to initialise WIC format converter")?;
+				).map_err(winerr_map("Failed to initialise WIC format converter"))?;
 
 				format_converter.GetSize(&mut width, &mut height)
-					.map_err(|_| "Failed to get image size")?;
+					.map_err(winerr_map("Failed to get image size"))?;
 
 				let new_pixel_format = format_converter.GetPixelFormat()
-					.map_err(|_| "Failed to get pixel format")?;
+					.map_err(winerr_map("Failed to get pixel format"))?;
 				if new_pixel_format != GUID_WICPixelFormat32bppBGRA {
 					return Err("Failed to convert image format".to_string());
 				}
 
 				let compinfo = wic_factory.CreateComponentInfo(&new_pixel_format)
-					.map_err(|_| "Failed to get pixel format info")?;
+					.map_err(winerr_map("Failed to get pixel format info"))?;
 
 				let pfi: IWICPixelFormatInfo = compinfo.cast()
-					.map_err(|_| "Failed to get pixel format info")?;
+					.map_err(winerr_map("Failed to get pixel format info"))?;
 				let bpp = pfi.GetBitsPerPixel()
-					.map_err(|_| "Failed to get bits per pixel")?;
+					.map_err(winerr_map("Failed to get bits per pixel"))?;
 
 				row_pitch = ((width as usize * bpp as usize) + 7) / 8;
 				buf_size = row_pitch * height as usize;
@@ -602,19 +604,20 @@ impl Texture {
 					null(),
 					row_pitch as u32,
 					buf.as_mut_slice(),
-				).map_err(|_| "Failed to copy pixels")?;
+				).map_err(winerr_map("Failed to copy pixels"))?;
 			} else {
 				// Conversion is not needed
 
-				frame.GetSize(&mut width, &mut height).map_err(|_| "Failed to get image size")?;
+				frame.GetSize(&mut width, &mut height)
+					.map_err(winerr_map("Failed to get image size"))?;
 
 				let compinfo = wic_factory.CreateComponentInfo(&pixel_format)
-					.map_err(|_| "Failed to get pixel format info")?;
+					.map_err(winerr_map("Failed to get pixel format info"))?;
 
 				let pfi: IWICPixelFormatInfo = compinfo.cast()
-					.map_err(|_| "Failed to get pixel format info")?;
+					.map_err(winerr_map("Failed to get pixel format info"))?;
 				let bpp = pfi.GetBitsPerPixel()
-					.map_err(|_| "Failed to get bits per pixel")?;
+					.map_err(winerr_map("Failed to get bits per pixel"))?;
 
 				row_pitch = ((width as usize * bpp as usize) + 7) / 8;
 				buf_size = row_pitch * height as usize;
@@ -624,7 +627,7 @@ impl Texture {
 					null(),
 					row_pitch as u32,
 					buf.as_mut_slice()
-				).map_err(|_| "Failed to copy pixels")?;
+				).map_err(winerr_map("Failed to copy pixels"))?;
 			}
 
 			let tex_desc = D3D11_TEXTURE2D_DESC {
@@ -646,7 +649,7 @@ impl Texture {
 
 			let mut tex = None;
 			device.CreateTexture2D(&tex_desc, Some(&tex_sd), Some(&mut tex))
-				.map_err(|_| "Failed to create texture")?;
+				.map_err(winerr_map("Failed to create texture"))?;
 
 			let srv_desc = D3D11_SHADER_RESOURCE_VIEW_DESC {
 				Format: DXGI_FORMAT_B8G8R8A8_UNORM,

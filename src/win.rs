@@ -13,7 +13,7 @@ pub struct Dvr {
 	context: ID3D11DeviceContext,
 	swapchain: Option<SwapChain>,
 	wic_factory: IWICImagingFactory,
-	hwnd: HWND,
+	_hwnd: HWND,
 }
 
 impl Dvr {
@@ -105,7 +105,7 @@ impl Dvr {
 				context: context,
 				swapchain: Some(swapchain),
 				wic_factory,
-				hwnd: ctx,
+				_hwnd: ctx,
 			})
 		}
 	}
@@ -261,15 +261,15 @@ struct SwapChain {
 	width: c_float,
 	height: c_float,
 	target: ID3D11RenderTargetView,
-	vertex_buffer: ID3D11Buffer,
+	_vertex_buffer: ID3D11Buffer,
 	colour_shift_buffer: ID3D11Buffer,
 	matrix_buffer: ID3D11Buffer,
-	pixel_shader: ID3D11PixelShader,
-	vertex_shader: ID3D11VertexShader,
-	input_layout: ID3D11InputLayout,
-	blend_state: ID3D11BlendState,
-	rasterizer_state: ID3D11RasterizerState,
-	sampler_state: ID3D11SamplerState,
+	_pixel_shader: ID3D11PixelShader,
+	_vertex_shader: ID3D11VertexShader,
+	_input_layout: ID3D11InputLayout,
+	_blend_state: ID3D11BlendState,
+	_rasterizer_state: ID3D11RasterizerState,
+	_sampler_state: ID3D11SamplerState,
 }
 
 impl SwapChain {
@@ -527,22 +527,22 @@ impl SwapChain {
 				width: width as f32,
 				height: height as f32,
 				target: target.ok_or("Target was not created")?,
-				vertex_buffer: vertex_buffer.ok_or("Vertex buffer was not created")?,
+				_vertex_buffer: vertex_buffer.ok_or("Vertex buffer was not created")?,
 				colour_shift_buffer: colour_shift_buffer.ok_or("Colour shift buffer was not created")?,
 				matrix_buffer: matrix_buffer.ok_or("Matrix buffer was not created")?,
-				pixel_shader: pixel_shader.ok_or("Pixel shader was not created")?,
-				vertex_shader: vertex_shader.ok_or("Vertex shader was not created")?,
-				input_layout: input_layout.ok_or("Input layout was not created")?,
-				blend_state: blend_state.ok_or("Blend state was not created")?,
-				rasterizer_state: rasterizer_state.ok_or("Rasterizer state was not created")?,
-				sampler_state: sampler_state.ok_or("Sampler state was not created")?,
+				_pixel_shader: pixel_shader.ok_or("Pixel shader was not created")?,
+				_vertex_shader: vertex_shader.ok_or("Vertex shader was not created")?,
+				_input_layout: input_layout.ok_or("Input layout was not created")?,
+				_blend_state: blend_state.ok_or("Blend state was not created")?,
+				_rasterizer_state: rasterizer_state.ok_or("Rasterizer state was not created")?,
+				_sampler_state: sampler_state.ok_or("Sampler state was not created")?,
 			})
 		}
 	}
 }
 
 pub struct Texture {
-	tex: ID3D11Texture2D,
+	_tex: ID3D11Texture2D,
 	// This is in an array due to the call to PSSetShaderResources() in draw()
 	tex_view_arr: [Option<ID3D11ShaderResourceView>; 1],
 	size: (u32, u32),
@@ -669,7 +669,7 @@ impl Texture {
 			).map_err(|e| format!("Failed to create texture view {} {}", e.code(), e.message()))?; // TODO: clean up
 
 			Ok(Texture {
-				tex: tex.ok_or("Texture was not created")?,
+				_tex: tex.ok_or("Texture was not created")?,
 				tex_view_arr: [Some(tex_view.ok_or("Texture view was not created")?)],
 				size: (width, height),
 			})

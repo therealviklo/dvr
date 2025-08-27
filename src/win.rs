@@ -666,7 +666,7 @@ impl Texture {
 				tex.as_ref().ok_or("Texture was not created")?,
 				Some(&srv_desc),
 				Some(&mut tex_view)
-			).map_err(|e| format!("Failed to create texture view {} {}", e.code(), e.message()))?; // TODO: clean up
+			).map_err(winerr_map("Failed to create texture view {} {}"))?;
 
 			Ok(Texture {
 				_tex: tex.ok_or("Texture was not created")?,

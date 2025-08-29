@@ -45,7 +45,7 @@ impl StateHandler {
 			}
 			state_handler.dvr.start_draw()?;
 			state.draw(&state_handler.dvr)?;
-			state_handler.dvr.end_draw()?;
+			state_handler.dvr.end_draw_sync(1)?;
 		}
 	}
 }

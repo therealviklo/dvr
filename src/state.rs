@@ -5,6 +5,11 @@ mod wasm_state;
 #[cfg(target_arch = "wasm32")]
 pub use wasm_state::*;
 
+#[cfg(target_os = "windows")]
+mod win_state;
+#[cfg(target_os = "windows")]
+pub use win_state::*;
+
 pub trait State {
 	fn logic(&mut self) -> Result<LogicStatus, String>;
 	fn draw(&self, dvr: &Dvr) -> Result<(), String>;

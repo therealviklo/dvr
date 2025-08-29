@@ -1,8 +1,8 @@
 use uuid::Uuid;
-use windows::Win32::{Foundation::{HWND, LPARAM, LRESULT, RECT, WPARAM}, System::LibraryLoader::GetModuleHandleW, UI::WindowsAndMessaging::{AdjustWindowRect, CreateWindowExW, DefWindowProcW, DispatchMessageW, GetMessageW, LoadCursorW, PeekMessageW, RegisterClassExW, ShowWindow, TranslateMessage, UnregisterClassW, CS_OWNDC, CW_USEDEFAULT, IDC_ARROW, MSG, PM_REMOVE, SW_SHOW, WINDOW_EX_STYLE, WINDOW_STYLE, WNDCLASSEXW, WS_CAPTION, WS_MAXIMIZEBOX, WS_MINIMIZEBOX, WS_SYSMENU, WS_THICKFRAME}};
+use windows::Win32::{Foundation::{HWND, LPARAM, LRESULT, RECT, WPARAM}, System::LibraryLoader::GetModuleHandleW, UI::WindowsAndMessaging::{AdjustWindowRect, CreateWindowExW, DefWindowProcW, LoadCursorW, RegisterClassExW, ShowWindow, UnregisterClassW, CS_OWNDC, CW_USEDEFAULT, IDC_ARROW, SW_SHOW, WINDOW_EX_STYLE, WINDOW_STYLE, WNDCLASSEXW, WS_CAPTION, WS_MAXIMIZEBOX, WS_MINIMIZEBOX, WS_SYSMENU, WS_THICKFRAME}};
 use windows_strings::{HSTRING, PCWSTR};
 
-use crate::DvrCtx;
+use crate::{win_utils::{update_window, update_window_blocking}, DvrCtx};
 
 pub struct Interface {
 	_wnd_class: WndClass,
@@ -50,23 +50,11 @@ impl Interface {
 	}
 
 	pub fn update(&self) {
-		unsafe {
-			let mut msg: MSG = Default::default();
-			while PeekMessageW(&mut msg, Some(self.hwnd), 0, 0, PM_REMOVE).0 != 0 {
-				let _ = TranslateMessage(&mut msg);
-				DispatchMessageW(&mut msg);
-			}
-		}
+		update_window(self.hwnd);
 	}
 
 	pub fn update_blocking(&self) {
-		unsafe {
-			let mut msg: MSG = Default::default();
-			if GetMessageW(&mut msg, Some(self.hwnd), 0, 0).0 != 0 {
-				let _ = TranslateMessage(&mut msg);
-				DispatchMessageW(&mut msg);
-			}
-		}
+		update_window_blocking(self.hwnd);
 	}
 
 	pub fn get_ctx(&self) -> DvrCtx {

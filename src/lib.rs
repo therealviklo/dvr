@@ -13,8 +13,8 @@ pub use crate::win::*;
 mod win_utils;
 
 pub mod state;
-// pub mod font;
-// pub mod input;
+pub mod font;
+pub mod input;
 pub mod interface;
 
 #[cfg(target_arch = "wasm32")]

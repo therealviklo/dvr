@@ -1,3 +1,4 @@
+use wasm_bindgen::JsCast;
 use web_sys::WebGl2RenderingContext;
 use crate::DvrCtx;
 
@@ -13,17 +14,20 @@ impl Interface {
 		let canvas: web_sys::HtmlCanvasElement = document
 			.get_element_by_id("canvas")
 			.unwrap()
-			.dyn_into::<web_sys::HtmlCanvasElement>()?;
+			.dyn_into::<web_sys::HtmlCanvasElement>()
+			.map_err(|e| e.as_string().unwrap_or("Unknown error".to_string()))?; // TODO: better way?
 
 		let context = canvas
-			.get_context("webgl2")?
+			.get_context("webgl2")
+			.map_err(|e| e.as_string().unwrap_or("Unknown error".to_string()))?
 			.unwrap()
-			.dyn_into::<WebGl2RenderingContext>()?;
+			.dyn_into::<WebGl2RenderingContext>()
+			.map_err(|e| e.as_string().unwrap_or("Unknown error".to_string()))?;
 
 		Ok(Interface { context })
 	}
 
 	pub fn get_ctx(&self) -> DvrCtx {
-		self.context
+		self.context.clone()
 	}
 }

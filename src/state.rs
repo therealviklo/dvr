@@ -10,21 +10,21 @@ mod win_state;
 #[cfg(target_os = "windows")]
 pub use win_state::*;
 
-pub trait State {
-	fn logic(&mut self) -> Result<LogicStatus, String>;
-	fn draw(&self, dvr: &Dvr) -> Result<(), String>;
+pub trait State<Glob> {
+	fn logic(&mut self, glob: &mut Glob) -> Result<LogicStatus<Glob>, String>;
+	fn draw(&self, dvr: &Dvr, glob: &Glob) -> Result<(), String>;
 }
 
-pub enum LogicStatus {
+pub enum LogicStatus<Glob> {
 	Continue,
-	NewState(Box<dyn State>),
-	NewStateWithClosure(Box<dyn FnOnce(Box<dyn State>) -> Box<dyn State>>),
+	NewState(Box<dyn State<Glob>>),
+	NewStateWithClosure(Box<dyn FnOnce(Box<dyn State<Glob>>) -> Box<dyn State<Glob>>>),
 	Stop,
 }
 
-impl LogicStatus {
+impl<Glob> LogicStatus<Glob> {
 	/// Returns a LogicStatus::NewStateWithClosure with the provided function
-	pub fn nswc<T: FnOnce(Box<dyn State>) -> Box<dyn State> + 'static>(f: T) -> LogicStatus {
+	pub fn nswc<T: FnOnce(Box<dyn State<Glob>>) -> Box<dyn State<Glob>> + 'static>(f: T) -> LogicStatus<Glob> {
 		LogicStatus::NewStateWithClosure(Box::new(f))
 	}
 }

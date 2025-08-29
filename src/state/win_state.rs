@@ -4,21 +4,23 @@ use crate::{state::State, win_utils::update_window, Dvr};
 
 use super::LogicStatus::{Continue, NewState, NewStateWithClosure, Stop};
 
-pub struct StateHandler {
+pub struct StateHandler<Glob> {
 	dvr: Dvr,
-	state: Option<Box<dyn State>>,
+	state: Option<Box<dyn State<Glob>>>,
+	glob: Glob,
 }
 
-impl StateHandler {
-	fn new(dvr: Dvr, initial_state: Box<dyn State>) -> StateHandler {
+impl<Glob> StateHandler<Glob> {
+	fn new(dvr: Dvr, initial_state: Box<dyn State<Glob>>, glob: Glob) -> StateHandler<Glob> {
 		StateHandler {
 			dvr,
 			state: Some(initial_state),
+			glob: glob,
 		}
 	}
 
-	pub fn run(dvr: Dvr, initial_state: Box<dyn State>, hwnd: HWND) -> Result<(), String> {
-		let mut state_handler = Self::new(dvr, initial_state);
+	pub fn run(dvr: Dvr, initial_state: Box<dyn State<Glob>>, glob: Glob, hwnd: HWND) -> Result<(), String> {
+		let mut state_handler = Self::new(dvr, initial_state, glob);
 		loop {
 			update_window(hwnd);
 			let mut state;
@@ -29,7 +31,7 @@ impl StateHandler {
 						return Err(From::from("State handler has no state to call"))
 					},
 				};
-				match state.logic()? {
+				match state.logic(&mut state_handler.glob)? {
 					Continue => break,
 					NewState(new_state) => {
 						state_handler.state = Some(new_state)
@@ -44,7 +46,7 @@ impl StateHandler {
 				}
 			}
 			state_handler.dvr.start_draw()?;
-			state.draw(&state_handler.dvr)?;
+			state.draw(&state_handler.dvr, &state_handler.glob)?;
 			state_handler.dvr.end_draw_sync(1)?;
 		}
 	}

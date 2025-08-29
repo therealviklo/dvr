@@ -2,25 +2,27 @@ use std::{cell::RefCell, rc::Rc};
 use wasm_bindgen::{prelude::Closure, JsCast, JsValue};
 use crate::{state::{LogicStatus, State}, wasm_utils::log_errors, Dvr};
 
-pub struct StateHandler {
+pub struct StateHandler<Glob> {
 	dvr: Dvr,
-	state: Option<Box<dyn State>>,
+	state: Option<Box<dyn State<Glob>>>,
 	interval_handle: Rc<RefCell<Option<i32>>>,
 	interval_closure: Rc<RefCell<Option<Closure<dyn FnMut()>>>>,
+	glob: Glob,
 }
 
-impl StateHandler {
-	fn new(dvr: Dvr, initial_state: Box<dyn State>) -> StateHandler {
+impl<Glob: 'static> StateHandler<Glob> {
+	fn new(dvr: Dvr, initial_state: Box<dyn State<Glob>>, glob: Glob) -> StateHandler<Glob> {
 		StateHandler {
 			dvr,
 			state: Some(initial_state),
 			interval_handle: Rc::new(RefCell::new(None)),
 			interval_closure: Rc::new(RefCell::new(None)),
+			glob
 		}
 	}
 
-	pub fn run(dvr: Dvr, initial_state: Box<dyn State>) -> Result<(), String> {
-		let state_handler = Self::new(dvr, initial_state);
+	pub fn run(dvr: Dvr, initial_state: Box<dyn State<Glob>>, glob: Glob) -> Result<(), String> {
+		let state_handler = Self::new(dvr, initial_state, glob);
 		
 		let window = web_sys::window().ok_or("Unable to get window")?;
 		let interval_handle = state_handler.interval_handle.clone();
@@ -38,7 +40,7 @@ impl StateHandler {
 							return Err(From::from("State handler has no state to call"))
 						},
 					};
-					match state.logic() {
+					match state.logic(&mut state_handler.glob) {
 						Ok(LogicStatus::Continue) => {
 							break
 						},
@@ -61,7 +63,7 @@ impl StateHandler {
 					}
 				}
 				state_handler.dvr.start_draw()?;
-				state.draw(&state_handler.dvr)?;
+				state.draw(&state_handler.dvr, &state_handler.glob)?;
 				state_handler.dvr.end_draw()?;
 				Ok(())
 			}();
@@ -80,7 +82,7 @@ impl StateHandler {
 	}
 }
 
-impl Drop for StateHandler {
+impl<Glob> Drop for StateHandler<Glob> {
 	fn drop(&mut self) {
 		if let Some(window) = web_sys::window() {
 			if let Some(handle) = *self.interval_handle.borrow() {

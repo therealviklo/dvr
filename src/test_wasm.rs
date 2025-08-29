@@ -63,8 +63,8 @@ impl TestState {
     }
 }
 
-impl State for TestState {
-    fn logic(&mut self) -> Result<LogicStatus, String> {
+impl State<()> for TestState {
+    fn logic(&mut self, _glob: &mut ()) -> Result<LogicStatus<()>, String> {
         self.a += 0.1;
         self.a %= f32::consts::TAU;
         self.b -= 0.03;
@@ -79,7 +79,7 @@ impl State for TestState {
             // return Ok(LogicStatus::NewStateWithClosure(Box::new(|prev: Box<dyn State>| -> Box<dyn State> {
             //     Box::new(TestState2::new(prev))
             // })))
-            return Ok(LogicStatus::nswc(|prev: Box<dyn State>| -> Box<dyn State> {
+            return Ok(LogicStatus::nswc(|prev: Box<dyn State<()>>| -> Box<dyn State<()>> {
                 Box::new(TestState2::new(prev))
             }))
         }
@@ -99,7 +99,7 @@ impl State for TestState {
         Ok(LogicStatus::Continue)
     }
 
-    fn draw(&self, dvr: &Dvr) -> Result<(), String> {
+    fn draw(&self, dvr: &Dvr, _glob: &()) -> Result<(), String> {
         dvr.clear(0.1, 0.0, 0.1, 1.0)?;
         let tex = self.th.getr("pluto.png")?;
         dvr.draw(
@@ -206,25 +206,25 @@ impl State for TestState {
 }
 
 struct TestState2 {
-    ts: Option<Box<dyn State>>
+    ts: Option<Box<dyn State<()>>>
 }
 
 impl TestState2 {
-    pub fn new(ts: Box<dyn State>) -> TestState2 {
+    pub fn new(ts: Box<dyn State<()>>) -> TestState2 {
         TestState2 { ts: Some(ts) }
     }
 }
 
-impl State for TestState2 {
-    fn logic(&mut self) -> Result<LogicStatus, String> {
+impl State<()> for TestState2 {
+    fn logic(&mut self, _glob: &mut ()) -> Result<LogicStatus<()>, String> {
         if random() > 0.95 {
             return Ok(LogicStatus::NewState(self.ts.take().unwrap()))
         }
         Ok(LogicStatus::Continue)
     }
 
-    fn draw(&self, dvr: &Dvr) -> Result<(), String> {
-        self.ts.as_ref().unwrap().draw(&dvr)?;
+    fn draw(&self, dvr: &Dvr, glob: &()) -> Result<(), String> {
+        self.ts.as_ref().unwrap().draw(&dvr, glob)?;
         Ok(())
     }
 }
@@ -256,7 +256,7 @@ pub async fn start() -> Result<(), JsValue> {
         |x| "/".to_string() + x
     ).await?;
     let test_state = TestState::new(&dvr, texture_handler)?;
-    StateHandler::run(dvr, Box::new(test_state))?;
+    StateHandler::run(dvr, Box::new(test_state), ())?;
 
     Ok(())
 }

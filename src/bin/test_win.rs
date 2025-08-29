@@ -15,13 +15,13 @@ impl TestState {
 	}
 }
 
-impl State for TestState {
-	fn logic(&mut self) -> Result<LogicStatus, String> {
+impl State<()> for TestState {
+	fn logic(&mut self, _glob: &mut ()) -> Result<LogicStatus<()>, String> {
 		self.angle += 0.01;
 		Ok(LogicStatus::Continue)
 	}
 
-	fn draw(&self, dvr: &Dvr) -> Result<(), String> {
+	fn draw(&self, dvr: &Dvr, _glob: &()) -> Result<(), String> {
 		dvr.draw(&self.tex, 0.0, 0.0, None, None, self.angle)?;
 		Ok(())
 	}
@@ -31,6 +31,6 @@ fn main() -> Result<(), String> {
 	let interface = Interface::new("testy", 500, 250, true)?;
 	let dvr = Dvr::new(interface.get_ctx())?;
 	let test_state = TestState::new(&dvr)?;
-	StateHandler::run(dvr, Box::new(test_state), interface.get_ctx())?;
+	StateHandler::run(dvr, Box::new(test_state), (), interface.get_ctx())?;
 	Ok(())
 }

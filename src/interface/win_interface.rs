@@ -92,9 +92,9 @@ impl Interface {
 impl Drop for Interface {
 	fn drop(&mut self) {
 		unsafe {
-			if let Some(hwnd) =  self.shared.borrow().hwnd {
-				if let Err(e) = DestroyWindow(hwnd) {
-					panic!("{}", winerr_map("Unable to destroy window")(e))
+			if let Ok(shared) = self.shared.try_borrow() {
+				if let Some(hwnd) = shared.hwnd {
+					let _ = DestroyWindow(hwnd);
 				}
 			}
 		}

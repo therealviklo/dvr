@@ -1,10 +1,9 @@
 use core::f32;
-use crate::*;
+use crate::{interface::Interface, *};
 use crate::font::FontSheet;
 use js_sys::Math::random;
 use crate::input::{Event, Input};
 use wasm_bindgen::prelude::*;
-use web_sys::WebGl2RenderingContext;
 use crate::state::{LogicStatus, State, StateHandler};
 
 struct TestState {
@@ -236,20 +235,9 @@ extern "C" {
 
 #[wasm_bindgen(start)]
 pub async fn start() -> Result<(), JsValue> {
-    let window = web_sys::window().ok_or("Unable to get window")?;
-    let document = window.document().ok_or("Unable to get document")?;
+    let interface = Interface::new()?;
 
-    let canvas: web_sys::HtmlCanvasElement = document
-        .get_element_by_id("canvas")
-        .unwrap()
-        .dyn_into::<web_sys::HtmlCanvasElement>()?;
-
-    let context = canvas
-        .get_context("webgl2")?
-        .unwrap()
-        .dyn_into::<WebGl2RenderingContext>()?;
-
-    let dvr = Dvr::new(context)?;
+    let dvr = Dvr::new(interface.get_ctx())?;
     let texture_handler = TextureHandler::new(
         &dvr,
         &["pluto.png", "font.png"],

@@ -1,4 +1,4 @@
-use windows::{core::Error, Win32::{Foundation::HWND, System::Com::{CoInitializeEx, CoUninitialize, COINIT_APARTMENTTHREADED, COINIT_DISABLE_OLE1DDE}, UI::WindowsAndMessaging::{DispatchMessageW, GetMessageW, PeekMessageW, TranslateMessage, MSG, PM_REMOVE}}};
+use windows::{core::Error, Win32::{Foundation::{GetLastError, HWND, WPARAM}, System::Com::{CoInitializeEx, CoUninitialize, COINIT_APARTMENTTHREADED, COINIT_DISABLE_OLE1DDE}, UI::WindowsAndMessaging::{DispatchMessageW, GetMessageW, PeekMessageW, TranslateMessage, MSG, PM_REMOVE, WM_QUIT}}};
 
 pub struct ComInit {}
 
@@ -27,22 +27,39 @@ pub fn winerr_map(msg: &str) -> impl Fn(Error) -> String {
 	}
 }
 
-pub fn update_window(hwnd: HWND) {
+/// Updated the window using PeekMessageW(). Returns the exit code
+/// from WM_QUIT if it has been received, otherwise returns None.
+pub fn update_window(hwnd: HWND) -> Option<WPARAM> {
 	unsafe {
 		let mut msg: MSG = Default::default();
 		while PeekMessageW(&mut msg, Some(hwnd), 0, 0, PM_REMOVE).0 != 0 {
+			if msg.message == WM_QUIT {
+				return Some(msg.wParam)
+			}
 			let _ = TranslateMessage(&mut msg);
 			DispatchMessageW(&mut msg);
 		}
+		None
 	}
 }
 
-pub fn update_window_blocking(hwnd: HWND) {
+/// Updated the window using GetMessageW(). Returns the exit code
+/// from WM_QUIT if it has been received, otherwise returns None.
+pub fn update_window_blocking(hwnd: HWND) -> Result<Option<WPARAM>, String> {
 	unsafe {
 		let mut msg: MSG = Default::default();
-		if GetMessageW(&mut msg, Some(hwnd), 0, 0).0 != 0 {
-			let _ = TranslateMessage(&mut msg);
-			DispatchMessageW(&mut msg);
+		match GetMessageW(&mut msg, Some(hwnd), 0, 0).0 {
+			0 => {
+				Ok(Some(msg.wParam))
+			},
+			-1 => {
+				Err(format!("Failed to get window message: {}", GetLastError().to_hresult().message()))
+			},
+			_ => {
+				let _ = TranslateMessage(&mut msg);
+				DispatchMessageW(&mut msg);
+				Ok(None)
+			},
 		}
 	}
 }

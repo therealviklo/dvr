@@ -68,12 +68,26 @@ impl Interface {
 		}
 	}
 
-	pub fn update(&self) {
-		update_window(self.get_hwnd());
+	/// ### WINDOWS ONLY
+	/// 
+	/// Updates the window using PeekMessageW(). Returns the exit code
+	/// from WM_QUIT if it has been received, otherwise returns None.
+	/// 
+	/// # Panics
+	/// Panics if the function is unable to access the associated window.
+	pub fn update(&self) -> Option<WPARAM> {
+		update_window(self.get_hwnd())
 	}
 
-	pub fn update_blocking(&self) {
-		update_window_blocking(self.get_hwnd());
+	/// ### WINDOWS ONLY
+	/// 
+	/// Updates the window using GetMessageW(). Returns the exit code
+	/// from WM_QUIT if it has been received, otherwise returns None.
+	/// 
+	/// # Panics
+	/// Panics if the function is unable to access the associated window.
+	pub fn update_blocking(&self) -> Result<Option<WPARAM>, String> {
+		update_window_blocking(self.get_hwnd())
 	}
 
 	pub fn get_ctx(&self) -> DvrCtx {

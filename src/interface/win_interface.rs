@@ -75,7 +75,7 @@ impl Interface {
 	/// 
 	/// # Panics
 	/// Panics if the function is unable to access the associated window.
-	pub fn update(&self) -> Option<WPARAM> {
+	pub fn update(&self) -> Option<usize> {
 		update_window(self.get_hwnd())
 	}
 
@@ -86,7 +86,7 @@ impl Interface {
 	/// 
 	/// # Panics
 	/// Panics if the function is unable to access the associated window.
-	pub fn update_blocking(&self) -> Result<Option<WPARAM>, String> {
+	pub fn update_blocking(&self) -> Result<Option<usize>, String> {
 		update_window_blocking(self.get_hwnd())
 	}
 

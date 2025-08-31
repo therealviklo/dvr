@@ -22,7 +22,13 @@ impl<Glob> StateHandler<Glob> {
 	pub fn run(dvr: Dvr, initial_state: Box<dyn State<Glob>>, glob: Glob, hwnd: HWND) -> Result<(), String> {
 		let mut state_handler = Self::new(dvr, initial_state, glob);
 		loop {
-			update_window(hwnd);
+			if let Some(code) = update_window(hwnd) {
+				if code == 0 {
+					return Ok(())
+				} else {
+					return Err(format!("WM_QUIT contained exit code {}", code))
+				}
+			}
 			let mut state;
 			loop {
 				state = match state_handler.state.as_mut() {

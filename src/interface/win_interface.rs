@@ -86,6 +86,10 @@ impl Interface {
 			None => panic!("Interface has no associated window"),
 		}
 	}
+
+	pub fn exists(&self) -> bool {
+		self.shared.borrow().hwnd.is_some()
+	}
 }
 
 impl Drop for Interface {

@@ -13,7 +13,7 @@ pub struct Dvr {
 	context: ID3D11DeviceContext,
 	swapchain: Option<SwapChain>,
 	wic_factory: IWICImagingFactory,
-	_hwnd: HWND,
+	hwnd: HWND,
 }
 
 impl Dvr {
@@ -105,7 +105,7 @@ impl Dvr {
 				context: context,
 				swapchain: Some(swapchain),
 				wic_factory,
-				_hwnd: ctx,
+				hwnd: ctx,
 			})
 		}
 	}
@@ -254,6 +254,10 @@ impl Dvr {
 
 	fn get_swapchain(&self) -> Result<&SwapChain, String> {
 		self.swapchain.as_ref().ok_or(String::from("Swapchain is not available"))
+	}
+
+	pub fn get_hwnd(&self) -> HWND {
+		self.hwnd
 	}
 }
 

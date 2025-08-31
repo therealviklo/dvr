@@ -31,6 +31,6 @@ fn main() -> Result<(), String> {
 	let interface = Interface::new("testy", 500, 250, true)?;
 	let dvr = Dvr::new(interface.get_ctx())?;
 	let test_state = TestState::new(&dvr)?;
-	StateHandler::run(dvr, Box::new(test_state), (), interface.get_ctx())?;
+	StateHandler::run(dvr, Box::new(test_state), (), &interface)?;
 	Ok(())
 }

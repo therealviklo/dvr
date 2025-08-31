@@ -1,7 +1,4 @@
-use windows::Win32::Foundation::HWND;
-
-use crate::{state::State, win_utils::update_window, Dvr};
-
+use crate::{interface::Interface, state::State, Dvr};
 use super::LogicStatus::{Continue, NewState, NewStateWithClosure, Stop};
 
 pub struct StateHandler<Glob> {
@@ -19,16 +16,21 @@ impl<Glob> StateHandler<Glob> {
 		}
 	}
 
-	pub fn run(dvr: Dvr, initial_state: Box<dyn State<Glob>>, glob: Glob, hwnd: HWND) -> Result<(), String> {
+	pub fn run(dvr: Dvr, initial_state: Box<dyn State<Glob>>, glob: Glob, interface: &Interface) -> Result<(), String> {
+		Self::run_with_closures(
+			dvr,
+			initial_state,
+			glob,
+			|| { interface.update(); },
+			|| interface.exists()
+		)
+	}
+
+	// TODO: update_window return
+	pub fn run_with_closures(dvr: Dvr, initial_state: Box<dyn State<Glob>>, glob: Glob, mut update_window: impl FnMut(), mut window_exists: impl FnMut() -> bool) -> Result<(), String> {
 		let mut state_handler = Self::new(dvr, initial_state, glob);
-		loop {
-			if let Some(code) = update_window(hwnd) {
-				if code == 0 {
-					return Ok(())
-				} else {
-					return Err(format!("WM_QUIT contained exit code {}", code))
-				}
-			}
+		while window_exists() {
+			update_window();
 			let mut state;
 			loop {
 				state = match state_handler.state.as_mut() {
@@ -55,5 +57,6 @@ impl<Glob> StateHandler<Glob> {
 			state.draw(&state_handler.dvr, &state_handler.glob)?;
 			state_handler.dvr.end_draw_sync(1)?;
 		}
+		Ok(())
 	}
 }

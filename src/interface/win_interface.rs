@@ -2,6 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 use uuid::Uuid;
 use windows::Win32::{Foundation::{GetLastError, SetLastError, HWND, LPARAM, LRESULT, RECT, WIN32_ERROR, WPARAM}, System::LibraryLoader::GetModuleHandleW, UI::WindowsAndMessaging::{AdjustWindowRect, CreateWindowExW, DefWindowProcW, DestroyWindow, GetWindowLongPtrW, LoadCursorW, RegisterClassExW, SetWindowLongPtrW, ShowWindow, UnregisterClassW, CREATESTRUCTW, CS_OWNDC, CW_USEDEFAULT, GWLP_USERDATA, IDC_ARROW, SW_SHOW, WINDOW_EX_STYLE, WINDOW_STYLE, WM_CREATE, WM_DESTROY, WNDCLASSEXW, WS_CAPTION, WS_MAXIMIZEBOX, WS_MINIMIZEBOX, WS_SYSMENU, WS_THICKFRAME}};
 use windows_strings::{HSTRING, PCWSTR};
+
 use crate::{win_utils::{update_window, update_window_blocking}, DvrCtx};
 
 pub struct Interface {
@@ -123,19 +124,29 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, wparam: WPARAM, lparam: 
 		return DefWindowProcW(hwnd, msg, wparam, lparam);
 	}
 	if msg == WM_DESTROY {
+		let delete_shared_ptr = || {
+			// Drop the wndproc's reference to the rc
+			drop(Rc::from_raw(shared_ptr));
+			// Set the pointer to null, since it has been dropped
+			SetLastError(WIN32_ERROR(0));
+			let res = SetWindowLongPtrW(
+				hwnd,
+				GWLP_USERDATA,
+				0
+			);
+			if res == 0 && GetLastError().0 != 0 {
+				panic!("Unable to set user data for window")
+			}
+		};
 		// Try to clear the hwnd in shared
 		if let Ok(mut shared) = (*shared_ptr).try_borrow_mut() {
 			shared.hwnd = None;
+		} else {
+			// Attempt to delete the shared ptr before panicking
+			delete_shared_ptr();
+			panic!("Unable to clear interface hwnd")
 		}
-		// Drop the wndproc's reference to the rc
-		drop(Rc::from_raw(shared_ptr));
-		// Set the pointer to null, since it has been dropped
-		SetLastError(WIN32_ERROR(0));
-		SetWindowLongPtrW(
-			hwnd,
-			GWLP_USERDATA,
-			0
-		);
+		delete_shared_ptr();
 		
 		return LRESULT(0);
 	}

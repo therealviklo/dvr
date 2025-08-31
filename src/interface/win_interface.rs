@@ -3,7 +3,7 @@ use uuid::Uuid;
 use windows::Win32::{Foundation::{GetLastError, SetLastError, HWND, LPARAM, LRESULT, RECT, WIN32_ERROR, WPARAM}, System::LibraryLoader::GetModuleHandleW, UI::WindowsAndMessaging::{AdjustWindowRect, CreateWindowExW, DefWindowProcW, DestroyWindow, GetWindowLongPtrW, LoadCursorW, RegisterClassExW, SetWindowLongPtrW, ShowWindow, UnregisterClassW, CREATESTRUCTW, CS_OWNDC, CW_USEDEFAULT, GWLP_USERDATA, IDC_ARROW, SW_SHOW, WINDOW_EX_STYLE, WINDOW_STYLE, WM_CREATE, WM_DESTROY, WNDCLASSEXW, WS_CAPTION, WS_MAXIMIZEBOX, WS_MINIMIZEBOX, WS_SYSMENU, WS_THICKFRAME}};
 use windows_strings::{HSTRING, PCWSTR};
 
-use crate::{win_utils::{update_window, update_window_blocking, winerr_map}, DvrCtx};
+use crate::{win_utils::{update_window, update_window_blocking}, DvrCtx};
 
 pub struct Interface {
 	_wnd_class: WndClass,

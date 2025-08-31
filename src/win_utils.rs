@@ -27,8 +27,8 @@ pub fn winerr_map(msg: &str) -> impl Fn(Error) -> String {
 	}
 }
 
-/// Updated the window using PeekMessageW(). Returns the exit code
-/// from WM_QUIT if it has been received, otherwise returns None.
+/// Updates the window using PeekMessageW(), TranslateMessage() and DispatchMessageW().
+/// Returns the exit code from WM_QUIT if it has been received, otherwise returns None.
 pub fn update_window(hwnd: HWND) -> Option<WPARAM> {
 	unsafe {
 		let mut msg: MSG = Default::default();
@@ -43,8 +43,8 @@ pub fn update_window(hwnd: HWND) -> Option<WPARAM> {
 	}
 }
 
-/// Updated the window using GetMessageW(). Returns the exit code
-/// from WM_QUIT if it has been received, otherwise returns None.
+/// Updates the window using GetMessageW(), TranslateMessage() and DispatchMessageW.
+/// Returns the exit code from WM_QUIT if it has been received, otherwise returns None.
 pub fn update_window_blocking(hwnd: HWND) -> Result<Option<WPARAM>, String> {
 	unsafe {
 		let mut msg: MSG = Default::default();

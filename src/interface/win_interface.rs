@@ -70,8 +70,8 @@ impl Interface {
 
 	/// ### WINDOWS ONLY
 	/// 
-	/// Updates the window using PeekMessageW(). Returns the exit code
-	/// from WM_QUIT if it has been received, otherwise returns None.
+	/// Updates the window using PeekMessageW(), TranslateMessage() and DispatchMessageW().
+	/// Returns the exit code from WM_QUIT if it has been received, otherwise returns None.
 	/// 
 	/// # Panics
 	/// Panics if the function is unable to access the associated window.
@@ -81,8 +81,8 @@ impl Interface {
 
 	/// ### WINDOWS ONLY
 	/// 
-	/// Updates the window using GetMessageW(). Returns the exit code
-	/// from WM_QUIT if it has been received, otherwise returns None.
+	/// Updates the window using GetMessageW(), TranslateMessage() and DispatchMessageW.
+	/// Returns the exit code from WM_QUIT if it has been received, otherwise returns None.
 	/// 
 	/// # Panics
 	/// Panics if the function is unable to access the associated window.
